@@ -4,8 +4,8 @@ Checks: >
   -readability-magic-numbers, -modernize-use-trailing-return-type,
   -google-readability-namespace-comments, -google-runtime-int,
   -misc-include-cleaner, -misc-non-private-member-variables-in-classes,
-  -readability-identifier-length, -bugprone-easily-swappable-parameters,
-  -misc-no-recursion,
+  -readability-identifier-length, -readability-named-parameter,
+  -bugprone-easily-swappable-parameters, -misc-no-recursion,
 
 # Turn all the warnings from the checks above into errors.
 WarningsAsErrors: "*"

@@ -7,7 +7,14 @@ set(BIN_DIR "./bin")
 set(TST_DIR "./tests")
 
 # Main executable
-add_executable(${MAIN_TARGET} src/main.cpp)
+add_executable(${MAIN_TARGET})
+target_sources(${MAIN_TARGET}
+	PRIVATE src/main.cpp src/SFMLApp.cpp
+	PUBLIC
+	FILE_SET HEADERS
+)
+
+target_include_directories(${MAIN_TARGET} PUBLIC include/)
 
 # Compilation flags
 set(BASE_FLAGS
