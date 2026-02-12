@@ -16,7 +16,7 @@ namespace kalika
     sf::Vector2f right = sf::Vector2f({1.0F, 0.0F});
 
     // Movement
-    float velocity = 3.0f;
+    float body_vel = 3.0f;
     sf::Vector2f strength;
   };
 
@@ -29,6 +29,12 @@ namespace kalika
   private:
     sf::Texture body_tex_;
     sf::Texture reticle_tex_;
+
+    // ====== Helper Functions ======= //
+    // Update frame data
+    void update_frame(sf::Vector2f const& l_offset);
+    // Smoothen inputs by quantizing them
+    static sf::Vector2f smoothen(sf::Vector2f vec, int factor = 5U);
 
   public:
     sf::Sprite body;
@@ -51,30 +57,6 @@ namespace kalika
      * @brief Move and orient the ship in the corresponding direction
      */
     void move(float dt);
-
-    /**
-     * @brief Update frame of reference
-     * @param pos New position to be moved to
-     */
-    void update_frame(sf::Vector2f const& offset)
-    {
-      // Rotate the frame
-      if (fabsf(this->mov.up.lengthSquared() - 1.f) < 1e-6) {
-        this->mov.up = this->mov.up.normalized();
-      }
-      this->mov.right = this->mov.up.perpendicular();
-
-      // Transform the ship
-      this->body.move(offset);
-      this->body.setRotation(
-        this->mov.up.angle() + sf::radians(M_PIf / 2)
-      );
-
-      // Move the reticle
-      this->reticle.setPosition(
-        this->body.getPosition() + this->forward() * this->shoot.radius
-      );
-    }
 
     /**
      * @brief Crop the sprite to texture

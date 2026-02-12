@@ -15,7 +15,7 @@ namespace kalika
     up({0.F, -1.F}),
     player_(build_player(
       cast<unsigned int, float>(dimensions / 2U),
-      static_cast<float>(dimensions.y) / 3.F
+      static_cast<float>(dimensions.y) / 5.F
     ))
   {
     // Window configuration
