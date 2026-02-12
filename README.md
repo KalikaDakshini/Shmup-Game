@@ -1,3 +1,3 @@
-## Sample Project
+## Shmup game
 
-A simple C++ project doing stuff
+A simple C++ twin stick shooter game.
