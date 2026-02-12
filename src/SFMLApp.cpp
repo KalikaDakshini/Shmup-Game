@@ -12,6 +12,7 @@ namespace kalika
       "Twin Stick",
       sf::Style::Titlebar | sf::Style::Close
     ),
+    up({0.F, -1.F}),
     player_(build_player(
       cast<unsigned int, float>(dimensions / 2U),
       static_cast<float>(dimensions.y) / 3.F
@@ -43,14 +44,7 @@ namespace kalika
   {
     sf::Clock timer;
 
-    auto pos = this->player_.body.getPosition();
-    std::cout << std::format("Position: {}, {}", pos.x, pos.y) << '\n';
-    pos = this->player_.reticle.getPosition();
-    std::cout << std::format("Position: {}, {}", pos.x, pos.y) << '\n';
-
     // Window loop
-
-    // float angle = -M_PIf;
     while (this->window_.isOpen()) {
       // Timer
       float const dt = timer.restart().asSeconds();
@@ -65,8 +59,6 @@ namespace kalika
 
       // Move the objects
       this->player_.move(dt);
-      // this->player_.body.setRotation(sf::radians(angle));
-      // angle += dt;
 
       // Draw objects
       this->window_.draw(this->player_.body);

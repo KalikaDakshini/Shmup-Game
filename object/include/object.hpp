@@ -11,14 +11,17 @@
 namespace kalika
 {
   struct Movable {
-    float velocity;
+    // Orientation
+    sf::Vector2f up = sf::Vector2f({0.0F, -1.0F});
+    sf::Vector2f right = sf::Vector2f({1.0F, 0.0F});
+
+    // Movement
+    float velocity = 3.0f;
     sf::Vector2f strength;
   };
 
   struct Shootable {
     sf::Vector2f strength;
-    sf::Vector2f prev_strength;
-    float angle;
     float radius;
   };
 
@@ -40,9 +43,38 @@ namespace kalika
     );
 
     /**
+     * @brief Return the forward direction
+     */
+    sf::Vector2f const& forward() const { return this->mov.up; }
+
+    /**
      * @brief Move and orient the ship in the corresponding direction
      */
     void move(float dt);
+
+    /**
+     * @brief Update frame of reference
+     * @param pos New position to be moved to
+     */
+    void update_frame(sf::Vector2f const& offset)
+    {
+      // Rotate the frame
+      if (fabsf(this->mov.up.lengthSquared() - 1.f) < 1e-6) {
+        this->mov.up = this->mov.up.normalized();
+      }
+      this->mov.right = this->mov.up.perpendicular();
+
+      // Transform the ship
+      this->body.move(offset);
+      this->body.setRotation(
+        this->mov.up.angle() + sf::radians(M_PIf / 2)
+      );
+
+      // Move the reticle
+      this->reticle.setPosition(
+        this->body.getPosition() + this->forward() * this->shoot.radius
+      );
+    }
 
     /**
      * @brief Crop the sprite to texture

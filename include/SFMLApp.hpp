@@ -38,6 +38,9 @@ namespace kalika
     sf::Text log_text_{font_, "", 15};
     std::deque<std::string> logs_;
 
+    // World info
+    sf::Vector2f up;
+
     // Objects
     Player player_;
 

@@ -31,27 +31,18 @@ namespace kalika
   // Move the player
   void Player::move(float dt)
   {
-    // Move according to L-stick direction
+    // Move along the L-stick direction in the global frame
     sf::Vector2f const l_offset =
       this->mov.strength * this->mov.velocity * dt;
-    this->body.move(l_offset);
 
-    // TODO(kalika): aiming direction should persist
-    // Aim in the R-stick direction
+    // Turn the frame towards the R-stick
     sf::Vector2f const r_offset = this->shoot.strength;
     if (r_offset.lengthSquared() > 0) {
-      this->body.setRotation(
-        sf::Vector2f({-r_offset.y, r_offset.x}).angle()
-      );
-      this->shoot.prev_strength = this->shoot.strength;
+      this->mov.up = r_offset;
     }
 
-    // Set reticle position according to r_stick
-    sf::Vector2f const apparent_dir =
-      this->shoot.prev_strength.normalized();
-    this->reticle.setPosition(
-      this->body.getPosition() + apparent_dir * this->shoot.radius
-    );
+    // Transform the co-ordinate frame to the new position
+    this->update_frame(l_offset);
   }
 
   // Build player object
@@ -59,20 +50,15 @@ namespace kalika
   {
     Player player{"resources/player.png", "resources/reticle.png"};
 
-    // Initial player config
-    player.body.setPosition(position);
+    // Player config
     player.body.scale({4.0F, 4.0F});
-
-    // Initial reticle config
-    player.shoot.radius = radius;
-    player.shoot.strength = sf::Vector2f(100, sf::degrees(-90));
-    player.shoot.prev_strength = sf::Vector2f(100, sf::degrees(-90));
-    player.reticle.setPosition(position + sf::Vector2f({0, -radius}));
     player.reticle.scale({3.0F, 3.0F});
+    player.shoot.radius = radius;
+    player.mov.velocity = velocity;
     player.reticle.setColor(sf::Color::Cyan);
 
-    // Update other information
-    player.mov.velocity = velocity;
+    // Update frame of reference
+    player.update_frame(position);
 
     return player;
   }
