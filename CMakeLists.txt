@@ -52,3 +52,7 @@ option(BUILD_TESTING "Enable testing and build tests" ON)
 # Link libraries
 find_package(SFML 3 REQUIRED Graphics System Window)
 target_link_libraries(${MAIN_TARGET} PRIVATE SFML::Graphics)
+
+# Link library object
+add_subdirectory(object)
+target_link_libraries(${MAIN_TARGET} PRIVATE object)

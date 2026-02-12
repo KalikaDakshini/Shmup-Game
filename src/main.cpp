@@ -4,7 +4,7 @@
 
 int main()
 {
-  SFMLApp app;
+  kalika::SFMLApp app;
   // Run application
   try {
     app.run();
