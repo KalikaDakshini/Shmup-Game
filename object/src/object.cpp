@@ -7,6 +7,8 @@ namespace kalika
 {
   constexpr float EPSILON = 10.F;
 
+  // ====== Player Functions ====== //
+
   // Constructor
   Player::Player(
     std::filesystem::path const& body_path,
@@ -17,12 +19,11 @@ namespace kalika
     body(body_tex_),
     reticle(reticle_tex_)
   {
-    sf::Vector2i const size({13, 13});
-    // Set base texture
-    this->crop({0, 0}, size);
-
     // Load sprites
-    this->body.setOrigin(cast<int, float>(size / 2));
+    auto const tex_size = this->body_tex_.getSize();
+    this->body.setOrigin(cast<unsigned int, float>(tex_size / 2U));
+    this->body.scale({0.5F, 0.5F});
+
     this->reticle.setOrigin(
       cast<unsigned int, float>(this->reticle_tex_.getSize() / 2U)
     );
@@ -93,6 +94,10 @@ namespace kalika
 
     return {smoothen(vec.x), smoothen(vec.y)};
   }
+
+  // ======= Bullet Functions ====== //
+
+  // ====== Factory Functions ====== //
 
   // Build player object
   Player build_player(sf::Vector2f position, float radius, float velocity)

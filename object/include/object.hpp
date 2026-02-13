@@ -79,6 +79,11 @@ namespace kalika
     return {static_cast<U>(vec.x), static_cast<U>(vec.y)};
   }
 
+  /**
+   * @brief Represents a bullet object
+   */
+  struct Bullet {};
+
 }  // namespace kalika
 
 #endif
