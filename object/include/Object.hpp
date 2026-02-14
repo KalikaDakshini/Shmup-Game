@@ -3,7 +3,8 @@
 
 #include <SFML/System.hpp>
 #include <algorithm>
-#include <deque>
+#include <iterator>
+#include <vector>
 
 #include "helpers.hpp"
 
@@ -21,42 +22,61 @@ namespace kalika
     /**
      * @brief Get an object from the pool
      */
-    void add(ObjInfo<Object> info);
+    void get(ObjInfo<Object> info);
 
     /**
-     * @brief Retire an object from the pool, i.e. despawn it
+     * @brief Retire an object from the pool
      */
-    void retire();
+    void release();
 
-    size_t size() const { return this->objects_.size(); }
+    size_t size() const { return this->last_; }
 
-    using iterator = std::deque<Object>::iterator;
-    using const_iterator = std::deque<Object>::const_iterator;
+    using iterator = std::vector<Object>::iterator;
+    using const_iterator = std::vector<Object>::const_iterator;
 
-    iterator begin() { return objects_.begin(); }
+    iterator begin() { return this->objects_.begin(); }
 
-    iterator end() { return objects_.end(); }
+    iterator end() { return this->objects_.begin() + this->last_; }
 
-    const_iterator begin() const { return objects_.begin(); }
+    const_iterator begin() const { return this->objects_.begin(); }
 
-    const_iterator end() const { return objects_.end(); }
+    const_iterator end() const
+    {
+      return this->objects_.begin() + this->last_;
+    }
 
   private:
-    std::deque<Object> objects_;
+    std::vector<Object> objects_;
+    size_t last_ = 0UL;
   };
 
   template<typename Object>
-  void ObjectPool<Object>::add(ObjInfo<Object> info)
+  void ObjectPool<Object>::get(ObjInfo<Object> info)
   {
-    this->objects_.emplace_back(internal::build_object<Object>(info));
+    // Add a new object if pool is full
+    if (this->last_ == this->objects_.size()) {
+      this->objects_.emplace_back(internal::build_object<Object>(info));
+      this->last_++;
+      return;
+    }
+
+    // Update an unused object otherwise
+    auto& obj = this->objects_[this->last_];
+    obj.rebuild(info);
+    this->last_++;
   }
 
-  // Retire an object in pool
-  template<typename Object> void ObjectPool<Object>::retire()
+  // Implement pool functionality
+  template<typename Object> void ObjectPool<Object>::release()
   {
-    std::erase_if(this->objects_, [](auto obj) {
-      return !(obj.isAlive());
-    });
+    auto idx = 0UL;
+    while (idx < this->last_) {
+      auto& obj = this->objects_[idx++];
+      // Swap retired objects with the last active object
+      if (!(obj.isAlive())) {
+        std::swap(obj, this->objects_[--this->last_]);
+      }
+    }
   }
 
 }  //namespace kalika

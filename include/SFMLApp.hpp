@@ -22,7 +22,10 @@ namespace kalika
    */
   struct SFMLApp {
     // Constructor
-    SFMLApp(sf::Vector2u dimensions = {1280U, 800U});
+    SFMLApp(
+      sf::Vector2u dimensions = {1280U, 800U},
+      char const* title = "Smol Shmup"
+    );
 
     /**
      * @brief Run the application
@@ -31,17 +34,18 @@ namespace kalika
 
   private:
     // Window information
+    float dt = 0.0F;
+    size_t frame_count = 0UL;
     sf::Clock clock_;
     sf::RenderWindow window_;
     sf::ContextSettings settings;
 
     // Log information
     sf::Font const font_{"resources/tuffy.ttf"};
-    sf::Text log_text_{font_, "", 15};
+    sf::Text log_text_{font_};
     std::deque<std::string> logs_;
 
     // World info
-    float dt = 0.0F;
     sf::Vector2f up;
 
     // Objects

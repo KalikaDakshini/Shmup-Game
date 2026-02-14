@@ -4,7 +4,7 @@
 
 int main()
 {
-  kalika::SFMLApp app;
+  kalika::SFMLApp app({1600, 1000});
   // Run application
   try {
     app.run();

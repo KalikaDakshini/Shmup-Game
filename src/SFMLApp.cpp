@@ -7,31 +7,35 @@
 namespace kalika
 {
   // Constructor
-  SFMLApp::SFMLApp(sf::Vector2u dimensions) :
+  SFMLApp::SFMLApp(sf::Vector2u dimensions, char const* title) :
+    // Window infor
     window_(
       sf::VideoMode(dimensions),
-      "Twin Stick",
+      title,
       sf::Style::Titlebar | sf::Style::Close
     ),
+    // World axis
     up({0.F, -1.F}),
+    // Player Information
     player_(
       Player::create(
-        sf::Vector2<float>(dimensions / 2U),
-        300.0F,
-        static_cast<float>(dimensions.y) / 5.F
+        {.position = sf::Vector2<float>(dimensions / 2U),
+         .velocity = static_cast<float>(dimensions.x) / 4.F,
+         .radius = static_cast<float>(dimensions.y) / 4.F,
+         .dir = up}
       )
     ),
     wld_ctx(this->window_.getSize(), this->clock_)
   {
     // Window configuration
     this->window_.setFramerateLimit(60);
-    // TODO(kalika): Compute this instead of hardcoding it
     this->window_.setPosition(
       sf::Vector2<int>(
         (sf::VideoMode::getDesktopMode().size - dimensions) / 2U
       )
     );
     this->window_.setKeyRepeatEnabled(false);
+    this->log_text_.setCharacterSize(dimensions.y / 50U);
 
     // Anti-aliasing
     this->settings.antiAliasingLevel = 8;
@@ -47,12 +51,13 @@ namespace kalika
   // Run the SFMLApp
   void SFMLApp::run()
   {
-    sf::Clock timer;
-
     // Window loop
+    float last_stamp = 0.0F;
     while (this->window_.isOpen()) {
-      // Timer
-      this->dt = timer.restart().asSeconds();
+      // Timer data
+      this->dt = this->clock_.getElapsedTime().asSeconds() - last_stamp;
+      last_stamp = this->clock_.getElapsedTime().asSeconds();
+      this->frame_count++;
 
       // Clean slate
       this->window_.clear();
@@ -71,8 +76,6 @@ namespace kalika
         obj.update(this->wld_ctx, this->str_ctx, dt);
       }
 
-      std::cout << "Bullet Count: " << this->bullet_pool_.size() << " \r";
-
       // Draw objects
       this->window_.draw(this->player_.body);
       this->window_.draw(this->player_.reticle);
@@ -81,7 +84,7 @@ namespace kalika
       }
 
       // Clear pool
-      this->bullet_pool_.retire();
+      this->bullet_pool_.release();
 
       // Log messages to window
       this->log();
@@ -95,18 +98,35 @@ namespace kalika
   void SFMLApp::log()
   {
     // Draw the contents of the log to the window
-    for (std::size_t i = 0; i < this->logs_.size(); ++i) {
+    auto [w, h] = this->window_.getSize();
+    auto const x_disp = w / 30U;
+    auto const y_disp = h / 20U;
+    for (auto i = 0UL; i < this->logs_.size(); ++i) {
       this->log_text_.setPosition(
-        {50.F, static_cast<float>(i * 20) + 50.F}
+        {static_cast<float>(x_disp), static_cast<float>((i + 1) * y_disp)}
       );
       this->log_text_.setString(this->logs_[i]);
       this->window_.draw(this->log_text_);
     }
+
+    // Log Object count
+    this->log_text_.setPosition(
+      {static_cast<float>(x_disp), static_cast<float>(h - y_disp * 2)}
+    );
+    this->log_text_.setString(
+      std::format("Bullet Count: {}", this->bullet_pool_.size())
+    );
+    this->window_.draw(this->log_text_);
   }
 
   // Update message logs
   void SFMLApp::update_log(std::string const& text)
   {
+    if (this->frame_count < 30 && frame_count != 0) {
+      return;
+    }
+
+    this->frame_count = 0;
     // Upper limit on messages
     if (this->logs_.size() == 12U) {
       this->logs_.pop_front();
@@ -120,7 +140,7 @@ namespace kalika
     if (this->player_.shoot.strength.lengthSquared() > 0) {
       std::ranges::for_each(
         this->player_.fire(this->wld_ctx, dt),
-        [this](auto const& info) { this->bullet_pool_.add(info); }
+        [this](auto const& info) { this->bullet_pool_.get(info); }
       );
     }
   }
@@ -160,16 +180,9 @@ namespace kalika
 
   void SFMLApp::handle(sf::Event::JoystickMoved const& event)
   {
-    auto print_vec = [](auto const& id, auto const& vec) {
-      return std::format("{}: {}, {}\n", id, vec.x, vec.y);
-    };
-
-    this->update_log(
-      print_vec("Player", this->player_.body.getPosition())
-    );
-    this->update_log(
-      print_vec("Reticle", this->player_.reticle.getPosition())
-    );
+    // auto print_vec = [](auto const& id, auto const& vec) {
+    //   return std::format("{}: {}, {}\n", id, vec.x, vec.y);
+    // };
 
     // Control movement
     float const pos = event.position;

@@ -9,12 +9,7 @@ namespace kalika
     sprite(TextureStore::get_tex(info.obj_type)), lifetime(info.lifetime)
   {
     // Choose bullet behaviour
-    if (info.obj_type == BulletType::HOMING) {
-      behaviour = Homing();
-    }
-    else {
-      behaviour = Straight();
-    }
+    this->set_behaviour(info.obj_type);
 
     // Position data
     this->sprite.setPosition(info.position);
@@ -59,6 +54,23 @@ namespace kalika
     this->set_alive(wld_ctx);
   }
 
+  // Rebuild a bullet using info
+  void Bullet::rebuild(ObjInfo<Bullet> info)
+  {
+    // Toggle alive status
+    this->alive = true;
+
+    // Set parameters
+    this->set_behaviour(info.obj_type);
+    this->mov.body_vel = info.velocity;
+    this->mov.up = info.dir;
+    this->sprite.setPosition(info.position);
+    this->lifetime = info.lifetime;
+
+    // Update frame of reference
+    this->update_frame();
+  }
+
   // Updates co-ordinate data
   void Bullet::update_frame()
   {
@@ -76,6 +88,16 @@ namespace kalika
     bool const time_check = this->lifetime > 0;
 
     alive = (area_check && time_check);
+  }
+
+  void Bullet::set_behaviour(BulletType type)
+  {
+    if (type == BulletType::HOMING) {
+      behaviour = Homing();
+    }
+    else {
+      behaviour = Straight();
+    }
   }
 
   Bullet Bullet::create(ObjInfo<Bullet> info)

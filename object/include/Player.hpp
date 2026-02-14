@@ -16,17 +16,21 @@
 
 namespace kalika
 {
+  // Forward declaration
   struct FireMode;
+
+  // Player Info
+  struct PlayerInfo {
+    sf::Vector2f position;
+    float velocity;
+    float radius;
+    sf::Vector2f dir;
+  };
 
   /**
    * @brief Player class
    */
   struct Player {
-  private:
-    sf::Texture body_tex_;
-    sf::Texture reticle_tex_;
-    std::unique_ptr<FireMode> mode_;
-
     /**
      * @brief Reticle information
      */
@@ -35,22 +39,13 @@ namespace kalika
       float radius;
     };
 
-    // ====== Helper Functions ======= //
-    // Update frame data
-    void update_frame(WorldContext const& ctx, float dt);
-    // Bind displacement to stay within the bounds
-    void bind(sf::FloatRect bounds, sf::Vector2f& disp);
-    // Smoothen inputs by quantizing them
-    static sf::Vector2f smoothen(sf::Vector2f vec, int factor = 5U);
-
-  public:
     sf::Sprite body;
     sf::Sprite reticle;
     Reticle shoot;
     internal::Movable mov;
 
     // Constructor
-    Player(sf::Vector2f position, float velocity, sf::Vector2f dir);
+    Player(PlayerInfo info);
 
     /**
      * @brief Return the forward direction
@@ -85,14 +80,41 @@ namespace kalika
      * @param velocity Starting velocity
      * @param radius Base range of the reticle
      */
-    static Player
-    create(sf::Vector2f position, float velocity, float radius);
+    static Player create(PlayerInfo info);
+
+  private:
+    // Firing mode specifier
+    std::unique_ptr<FireMode> mode_;
+
+    // ====== Helper Functions ======= //
+    // Update frame data
+    void update_frame(WorldContext const& ctx, float dt);
+    // Bind displacement to stay within the bounds
+    void bind(sf::FloatRect bounds, sf::Vector2f& disp);
+    // Smoothen inputs by quantizing them
+    static sf::Vector2f smoothen(sf::Vector2f vec, int factor = 5U);
+
+    // Load textures
+    static sf::Texture& body_texture()
+    {
+      static sf::Texture t;
+      (void)t.loadFromFile("resources/player.png");
+      return t;
+    }
+
+    static sf::Texture& reticle_texture()
+    {
+      static sf::Texture t;
+      (void)t.loadFromFile("resources/reticle.png");
+      return t;
+    }
   };
 
+  /**
+   * @brief Class describing Firing mode
+   */
   struct FireMode {
     float cooldown = 5;
-    // TODO(kalika): Implement Decay
-    float decay = 100.0F;
     int32_t last_stamp = 0;
     bool in_cooldown = false;
 
@@ -114,11 +136,18 @@ namespace kalika
   };
 
   // struct HomingFire : FireMode {
-  //   std::vector<ObjInfo<Bullet>> fire(float dt)  override final;
+  //   float velocity = 500.0F;
+
+  //   std::vector<ObjInfo<Bullet>> fire(
+  //     Player const& p, WorldContext const& ctx, float dt
+  //   ) override final;
   // };
 
   // struct SpreadFire : FireMode {
-  //   std::vector<ObjInfo<Bullet>> fire(float dt)  override final;
+  // float velocity = 500.0F;
+  //   std::vector<ObjInfo<Bullet>> fire(
+  //   Player const& p, WorldContext const& ctx, float dt
+  // ) override final;
   // };
 
 }  //namespace kalika

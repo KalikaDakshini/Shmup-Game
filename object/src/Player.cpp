@@ -6,24 +6,27 @@ namespace kalika
 {
   // ====== Player Functions ====== //
   // Constructor
-  Player::Player(sf::Vector2f position, float velocity, sf::Vector2f dir) :
-    reticle_tex_("resources/reticle.png"),
-    body_tex_("resources/player.png"),
-    body(body_tex_),
-    reticle(reticle_tex_)
+  Player::Player(PlayerInfo info) :
+    body(body_texture()), reticle(reticle_texture())
   {
     // Load sprites
-    auto const tex_size = this->body_tex_.getSize();
+    auto const tex_size = this->body.getTexture().getSize();
     this->body.setOrigin(sf::Vector2<float>(tex_size / 2U));
     this->reticle.setOrigin(
-      sf::Vector2<float>(this->reticle_tex_.getSize() / 2U)
+      sf::Vector2<float>(this->reticle.getTexture().getSize() / 2U)
     );
 
     // Set movement options
-    this->body.setPosition(position);
-    this->mov.up = dir.normalized();
-    this->mov.right = dir.perpendicular().normalized();
-    this->mov.body_vel = velocity;
+    this->body.setPosition(info.position);
+    this->mov.up = info.dir.normalized();
+    this->mov.right = info.dir.perpendicular().normalized();
+    this->mov.body_vel = info.velocity;
+    this->shoot.radius = info.radius;
+
+    // Size and colour
+    this->body.scale({2.0F, 2.0F});
+    this->reticle.scale({3.0F, 3.0F});
+    this->reticle.setColor(sf::Color::Cyan);
 
     // Set default fire mode
     this->set_mode(std::make_unique<RapidFire>());
@@ -168,22 +171,9 @@ namespace kalika
   }
 
   // Build player object
-  Player
-  Player::create(sf::Vector2f position, float velocity, float radius)
+  Player Player::create(PlayerInfo info)
   {
-    Player player{
-      position,
-      velocity,
-      sf::Vector2f({0.0F, -1.0F}),
-    };
-
-    // Player config
-    player.body.scale({2.0F, 2.0F});
-    player.reticle.scale({3.0F, 3.0F});
-    player.shoot.radius = radius;
-    player.reticle.setColor(sf::Color::Cyan);
-
-    return player;
+    return info;
   }
 
 }  //namespace kalika

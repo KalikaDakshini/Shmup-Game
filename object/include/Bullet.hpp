@@ -54,6 +54,11 @@ namespace kalika
     );
 
     /**
+     * @brief Rebuild an object using info
+     */
+    void rebuild(ObjInfo<Bullet> info);
+
+    /**
      * @brief Check if bullet is still alive
      */
     bool isAlive() const { return this->alive; }
@@ -67,10 +72,13 @@ namespace kalika
     using BulletVariant = std::variant<Homing, Straight>;
     BulletVariant behaviour;
 
-    // Helper functions
+    // ====== Helper functions ====== //
     void update_frame();
 
+    // Check if bullet is alive
     void set_alive(WorldContext const& ctx);
+
+    void set_behaviour(BulletType type);
   };
 
   /**
