@@ -1,5 +1,6 @@
 #include "SFMLApp.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <random>
 
@@ -13,16 +14,20 @@ namespace kalika
       sf::Style::Titlebar | sf::Style::Close
     ),
     up({0.F, -1.F}),
-    player_(build_player(
-      cast<unsigned int, float>(dimensions / 2U),
-      static_cast<float>(dimensions.y) / 5.F
-    ))
+    player_(
+      Player::create(
+        sf::Vector2<float>(dimensions / 2U),
+        300.0F,
+        static_cast<float>(dimensions.y) / 5.F
+      )
+    ),
+    wld_ctx(this->window_.getSize(), this->clock_)
   {
     // Window configuration
     this->window_.setFramerateLimit(60);
     // TODO(kalika): Compute this instead of hardcoding it
     this->window_.setPosition(
-      cast<unsigned int, int>(
+      sf::Vector2<int>(
         (sf::VideoMode::getDesktopMode().size - dimensions) / 2U
       )
     );
@@ -47,7 +52,7 @@ namespace kalika
     // Window loop
     while (this->window_.isOpen()) {
       // Timer
-      float const dt = timer.restart().asSeconds();
+      this->dt = timer.restart().asSeconds();
 
       // Clean slate
       this->window_.clear();
@@ -57,12 +62,26 @@ namespace kalika
         this->handle(event);
       });
 
+      // Custom even
+      this->fire_check();
+
       // Move the objects
-      this->player_.move(dt);
+      this->player_.move(wld_ctx, dt);
+      for (auto& obj : this->bullet_pool_) {
+        obj.update(this->wld_ctx, this->str_ctx, dt);
+      }
+
+      std::cout << "Bullet Count: " << this->bullet_pool_.size() << " \r";
 
       // Draw objects
       this->window_.draw(this->player_.body);
       this->window_.draw(this->player_.reticle);
+      for (auto const& obj : this->bullet_pool_) {
+        this->window_.draw(obj.sprite);
+      }
+
+      // Clear pool
+      this->bullet_pool_.retire();
 
       // Log messages to window
       this->log();
@@ -94,6 +113,16 @@ namespace kalika
     }
 
     this->logs_.emplace_back(text);
+  }
+
+  void SFMLApp::fire_check()
+  {
+    if (this->player_.shoot.strength.lengthSquared() > 0) {
+      std::ranges::for_each(
+        this->player_.fire(this->wld_ctx, dt),
+        [this](auto const& info) { this->bullet_pool_.add(info); }
+      );
+    }
   }
 
   // Handle closing events

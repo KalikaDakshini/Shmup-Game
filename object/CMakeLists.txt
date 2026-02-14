@@ -5,13 +5,14 @@ project(object LANGUAGES CXX)
 add_library(object OBJECT)
 target_sources(object
 	PRIVATE
-	src/object.cpp
+	src/Player.cpp
+	src/Bullet.cpp
 
 	PUBLIC
 	FILE_SET HEADERS
 	BASE_DIRS include/
 	FILES
-	include/object.hpp
+	include/Object.hpp
 )
 
 # Enable Testing

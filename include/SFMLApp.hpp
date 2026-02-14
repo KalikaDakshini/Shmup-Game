@@ -11,11 +11,12 @@
 #include <SFML/Main.hpp>
 #include <SFML/System.hpp>
 
-#include "object.hpp"
+#include "Bullet.hpp"
+#include "Object.hpp"
+#include "Player.hpp"
 
 namespace kalika
 {
-
   /**
    * @brief Application class
    */
@@ -30,6 +31,7 @@ namespace kalika
 
   private:
     // Window information
+    sf::Clock clock_;
     sf::RenderWindow window_;
     sf::ContextSettings settings;
 
@@ -39,10 +41,16 @@ namespace kalika
     std::deque<std::string> logs_;
 
     // World info
+    float dt = 0.0F;
     sf::Vector2f up;
 
     // Objects
     Player player_;
+    ObjectPool<Bullet> bullet_pool_;
+
+    // Context objects
+    WorldContext wld_ctx;
+    SteerContext str_ctx;
 
     // ======== Helper functions ======== //
     // Log to window
@@ -55,6 +63,8 @@ namespace kalika
     void
     deadzone(sf::Vector2<T>& in, sf::Vector2<T> out, float zone = 20.F);
 
+    // Handling JoystickHeld event
+    void fire_check();
     // Handle closing events
     void handle(sf::Event::Closed const&);
     // Key Press event

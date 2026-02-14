@@ -1,0 +1,86 @@
+#include "Bullet.hpp"
+
+#include <cmath>
+#include <utility>
+
+namespace kalika
+{
+  Bullet::Bullet(ObjInfo<Bullet> info) :
+    sprite(TextureStore::get_tex(info.obj_type)), lifetime(info.lifetime)
+  {
+    // Choose bullet behaviour
+    if (info.obj_type == BulletType::HOMING) {
+      behaviour = Homing();
+    }
+    else {
+      behaviour = Straight();
+    }
+
+    // Position data
+    this->sprite.setPosition(info.position);
+    this->sprite.scale({2.5F, 2.5F});
+
+    this->sprite.setOrigin(
+      sf::Vector2<float>(this->sprite.getTexture().getSize() / 2U)
+    );
+
+    // Orientation data
+    this->mov.up = info.dir;
+    this->mov.body_vel = info.velocity;
+
+    this->update_frame();
+  }
+
+  // Update bullet per frame
+  void Bullet::update(
+    WorldContext const& wld_ctx, SteerContext const& str_ctx, float dt
+  )
+  {
+    // Update co-ordinate frame
+    this->update_frame();
+
+    // Update lifetime
+    this->lifetime -= dt;
+
+    // Update kinetic data
+    auto accel = std::visit(
+      [&str_ctx](auto const& var) { return var.accel(str_ctx); },
+      this->behaviour
+    );
+    this->mov.set_vel(this->mov.velocity() + accel * dt);
+    auto disp = this->mov.velocity() * dt;
+    this->sprite.move(disp);
+
+    // Rotate the bullet
+    this->sprite.setRotation(
+      this->mov.up.angle() + sf::radians(M_PIf / 2)
+    );
+
+    this->set_alive(wld_ctx);
+  }
+
+  // Updates co-ordinate data
+  void Bullet::update_frame()
+  {
+    if (std::fabsf(this->mov.up.lengthSquared() - 1.0F) >
+        internal::EPSILON) {
+      this->mov.up = this->mov.up.normalized();
+    }
+    this->mov.right = this->mov.up.perpendicular().normalized();
+  }
+
+  void Bullet::set_alive(WorldContext const& ctx)
+  {
+    bool const area_check =
+      ctx.world_size.contains(this->sprite.getPosition());
+    bool const time_check = this->lifetime > 0;
+
+    alive = (area_check && time_check);
+  }
+
+  Bullet Bullet::create(ObjInfo<Bullet> info)
+  {
+    return {info};
+  }
+
+}  //namespace kalika
