@@ -1,9 +1,11 @@
 #include "Player.hpp"
 
 #include <iostream>
+#include <vector>
 
 namespace kalika
 {
+
   // ====== Player Functions ====== //
   // Constructor
   Player::Player(PlayerInfo info) :
@@ -20,7 +22,8 @@ namespace kalika
     this->body.setPosition(info.position);
     this->mov.up = info.dir.normalized();
     this->mov.right = info.dir.perpendicular().normalized();
-    this->mov.body_vel = info.velocity;
+    this->mov.vel_dir = info.vel_dir;
+    this->mov.vel_scale = info.vel_scale;
     this->shoot.radius = info.radius;
 
     // Size and colour
@@ -29,7 +32,7 @@ namespace kalika
     this->reticle.setColor(sf::Color::Cyan);
 
     // Set default fire mode
-    this->set_mode(std::make_unique<RapidFire>());
+    this->set_mode<RapidFire>();
   }
 
   // Move the player
@@ -51,12 +54,14 @@ namespace kalika
     this->mov.right = this->mov.up.perpendicular().normalized();
 
     // Transform the ship
-    sf::Vector2f dir;
     if (this->mov.strength.lengthSquared() > 0) {
-      dir = this->mov.strength.normalized();
+      this->mov.vel_dir = this->mov.strength.normalized();
+    }
+    else {
+      this->mov.vel_dir = {};
     }
     // Bind displacement to world boundaries
-    auto disp = dir * this->mov.body_vel * dt;
+    auto disp = this->mov.velocity() * dt;
     this->bind(ctx.world_size, disp);
     // Move the ship
     this->body.move(disp);
@@ -98,17 +103,11 @@ namespace kalika
     }
   }
 
-  // Set Firing mode
-  void Player::set_mode(std::unique_ptr<FireMode> mode)
-  {
-    this->mode_ = std::move(mode);
-  }
-
   // Fire ship's guns
   std::vector<ObjInfo<Bullet>>
   Player::fire(WorldContext const& ctx, float dt) const
   {
-    return this->mode_->fire(*this, ctx, dt);
+    return this->fire_mode(*this, ctx, dt);
   }
 
   // Rapid fire bullets
@@ -119,19 +118,21 @@ namespace kalika
     // Generate bullets if not in cooldown
     if (!in_cooldown) {
       // 1. Set positions of bullets
-      auto [px, py] = sf::Vector2f(p.body.getTexture().getSize());
-      py /= 2.F;
+      auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
 
-      auto pos1 = p.body.getPosition() + p.forward() * px + p.right() * py;
-      auto pos2 = p.body.getPosition() + p.forward() * px - p.right() * py;
+      std::array<sf::Vector2f, RapidFire::count> const pos = {
+        p.body.getPosition() + (p.forward() + p.right()) * px * norm2,
+        p.body.getPosition() + (p.forward() - p.right()) * px * norm2,
+      };
 
-      // 2. Generate info and add bullets
-      infos.emplace_back(
-        BulletType::STRAIGHT, pos1, this->velocity, p.forward()
-      );
-      infos.emplace_back(
-        BulletType::STRAIGHT, pos2, this->velocity, p.forward()
-      );
+      auto dir = p.forward();
+
+      for (auto idx = 0UL; idx < RapidFire::count; idx++) {
+        auto const new_vel = this->velocity * dir + p.mov.velocity();
+        infos.emplace_back(
+          BulletType::STRAIGHT, pos[idx], new_vel, this->lifetime
+        );
+      }
 
       // 3. Set timestamp
       this->last_stamp = ctx.cur_time();
@@ -146,19 +147,103 @@ namespace kalika
     return infos;
   }
 
-  // // Spread fire bullets
-  // std::vector<ObjInfo<Bullet>> SpreadFire::fire(float dt) const
-  // {
-  //   return {};
-  // }
+  // Rapid fire bullets
+  std::vector<ObjInfo<Bullet>>
+  SpreadFire::fire(Player const& p, WorldContext const& ctx, float dt)
+  {
+    std::vector<ObjInfo<Bullet>> infos;
+    // Generate bullets if not in cooldown
+    if (!in_cooldown) {
+      // 1. Set positions of bullets
+      // Assume texture is a square
+      auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
 
-  // // Homing bullets
-  // std::vector<ObjInfo<Bullet>> HomingFire::fire(float dt) const
-  // {
-  //   return {};
-  // }
+      // Set directions
+      std::array<sf::Vector2f, SpreadFire::count> const dir = {
+        (p.forward() + p.right() / 2.F) * norm1,
+        (p.forward() + p.right()) * norm2,
+        (p.forward() - p.right() / 2.F) * norm1,
+        (p.forward() - p.right()) * norm2,
+        p.forward(),
+      };
 
-  // Adjust the object based on L-stick position
+      // Set positions
+      std::array<sf::Vector2f, SpreadFire::count> const pos = {
+        p.body.getPosition() + (dir[0]) * px * norm1,
+        p.body.getPosition() + (dir[1]) * px * norm2,
+        p.body.getPosition() + (dir[2]) * px * norm1,
+        p.body.getPosition() + (dir[3]) * px * norm2,
+        p.body.getPosition() + (dir[4]) * px / 2.F
+      };
+
+      // 2. Generate info and add bullets
+      for (auto idx = 0UL; idx < SpreadFire::count; idx++) {
+        auto const new_vel = this->velocity * dir[idx] + p.mov.velocity();
+        infos.emplace_back(
+          BulletType::STRAIGHT, pos[idx], new_vel, this->lifetime
+        );
+      }
+
+      // 3. Set timestamp
+      this->last_stamp = ctx.cur_time();
+    }
+    // Toggle cooldown if passed
+    // 1. Record current time
+    auto const duration =
+      static_cast<float>(ctx.cur_time() - this->last_stamp);
+    // Set cooldown status
+    this->in_cooldown = (duration / (1000 * dt)) < this->cooldown;
+
+    return infos;
+  }
+
+  // Homing fire bullets
+  std::vector<ObjInfo<Bullet>>
+  HomingFire::fire(Player const& p, WorldContext const& ctx, float dt)
+  {
+    std::vector<ObjInfo<Bullet>> infos;
+    // Generate bullets if not in cooldown
+    if (!in_cooldown) {
+      // 1. Set positions of bullets
+      auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
+
+      auto dir1 = (p.forward() + p.right()) * norm2;
+      auto dir2 = (p.forward() - p.right()) * norm2;
+
+      std::array<sf::Vector2f, HomingFire::count> const pos = {
+        p.body.getPosition() + dir1 * px / 2.F,
+        p.body.getPosition() + dir2 * px / 2.F
+      };
+
+      // 2. Generate info and add bullets
+      auto const new_vel = this->velocity * p.forward() + p.mov.velocity();
+      if (toggle) {
+        infos.emplace_back(
+          BulletType::HOMING, pos[0], new_vel, this->lifetime
+        );
+      }
+      else {
+        infos.emplace_back(
+          BulletType::HOMING, pos[1], new_vel, this->lifetime
+        );
+      }
+
+      // Toggle Positions
+      toggle = !toggle;
+
+      // 3. Set timestamp
+      this->last_stamp = ctx.cur_time();
+    }
+
+    // Toggle cooldown if passed
+    // 1. Record current time
+    auto const duration =
+      static_cast<float>(ctx.cur_time() - this->last_stamp);
+    // Set cooldown status
+    this->in_cooldown = (duration / (1000 * dt)) < this->cooldown;
+
+    return infos;
+  }  //namespace kalika
 
   sf::Vector2f Player::smoothen(sf::Vector2f vec, int factor)
   {

@@ -88,8 +88,7 @@ namespace kalika
   template<> struct ObjInfo<Bullet> {
     Bullet::type obj_type;
     sf::Vector2f position;
-    float velocity;
-    sf::Vector2f dir;
+    sf::Vector2f velocity;
     float lifetime = 1.0F;
   };
 

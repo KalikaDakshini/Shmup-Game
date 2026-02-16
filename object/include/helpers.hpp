@@ -3,6 +3,7 @@
 
 #include <SFML/System.hpp>
 #include <cstddef>
+#include <iostream>
 #include <optional>
 
 namespace kalika
@@ -56,15 +57,23 @@ namespace kalika
       sf::Vector2f right = sf::Vector2f({1.0F, 0.0F});
 
       // Movement
-      float body_vel = 3.0F;
+      float vel_scale;
+      sf::Vector2f vel_dir;
       sf::Vector2f strength;
 
-      sf::Vector2f velocity() const { return this->up * this->body_vel; }
+      sf::Vector2f velocity() const { return this->vel_dir * vel_scale; }
 
-      void set_vel(sf::Vector2f vel)
+      // Note: Do not use for player
+      void setVelocity(sf::Vector2f velocity)
       {
-        this->up = vel.normalized();
-        this->body_vel = vel.length();
+        if (velocity.lengthSquared() == 0) {
+          this->vel_scale = 0;
+          this->vel_dir = {};
+          return;
+        }
+        this->vel_scale = velocity.length();
+        this->vel_dir = velocity.normalized();
+        this->up = this->vel_dir;
       }
     };
 

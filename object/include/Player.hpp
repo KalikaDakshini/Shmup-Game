@@ -16,13 +16,27 @@
 
 namespace kalika
 {
-  // Forward declaration
+  // Forward declarations
   struct FireMode;
+  struct Player;
+
+  namespace internal
+  {
+    // Fire functionality
+    template<typename Mode>
+    std::vector<ObjInfo<Bullet>>
+    fire_impl(Player const& player, WorldContext const& ctx, float dt)
+    {
+      static Mode mode;
+      return mode.fire(player, ctx, dt);
+    }
+  }  //namespace internal
 
   // Player Info
   struct PlayerInfo {
     sf::Vector2f position;
-    float velocity;
+    sf::Vector2f vel_dir;
+    float vel_scale;
     float radius;
     sf::Vector2f dir;
   };
@@ -43,6 +57,11 @@ namespace kalika
     sf::Sprite reticle;
     Reticle shoot;
     internal::Movable mov;
+    // FireMode selector
+    using FireFn = std::vector<ObjInfo<Bullet>> (*)(
+      Player const& player, WorldContext const& ctx, float dt
+    );
+    FireFn fire_mode = nullptr;
 
     // Constructor
     Player(PlayerInfo info);
@@ -65,7 +84,11 @@ namespace kalika
     /**
      * @brief Set the firing  mode
      */
-    void set_mode(std::unique_ptr<FireMode> mode);
+    // Set Firing mode
+    template<typename Mode> void set_mode()
+    {
+      this->fire_mode = &internal::fire_impl<Mode>;
+    }
 
     /**
      * @brief Fire bullets at a specified rate
@@ -83,9 +106,6 @@ namespace kalika
     static Player create(PlayerInfo info);
 
   private:
-    // Firing mode specifier
-    std::unique_ptr<FireMode> mode_;
-
     // ====== Helper Functions ======= //
     // Update frame data
     void update_frame(WorldContext const& ctx, float dt);
@@ -94,7 +114,7 @@ namespace kalika
     // Smoothen inputs by quantizing them
     static sf::Vector2f smoothen(sf::Vector2f vec, int factor = 5U);
 
-    // Load textures
+    // Texture Cache
     static sf::Texture& body_texture()
     {
       static sf::Texture t;
@@ -115,40 +135,50 @@ namespace kalika
    */
   struct FireMode {
     float cooldown = 5;
+    float lifetime = 1.0f;
     int32_t last_stamp = 0;
     bool in_cooldown = false;
+    float velocity = 1000.0F;
 
-    virtual ~FireMode() {};
-
-    virtual std::vector<ObjInfo<Bullet>>
-    fire(Player const& p, WorldContext const& ctx, float dt) = 0;
+  protected:
+    static constexpr float norm1 = 0.8944F;
+    static constexpr float norm2 = 0.7071F;
   };
 
   /**
    * @brief Rapid fire mode
    */
   struct RapidFire : FireMode {
-    float velocity = 750.0F;
+    float velocity = 1500.0F;
 
-    std::vector<ObjInfo<Bullet>> fire(
-      Player const& p, WorldContext const& ctx, float dt
-    ) override final;
+    std::vector<ObjInfo<Bullet>>
+    fire(Player const& p, WorldContext const& ctx, float dt);
+
+  private:
+    static constexpr size_t count = 2;
   };
 
-  // struct HomingFire : FireMode {
-  //   float velocity = 500.0F;
+  struct SpreadFire : FireMode {
+    float lifetime = 0.3F;
 
-  //   std::vector<ObjInfo<Bullet>> fire(
-  //     Player const& p, WorldContext const& ctx, float dt
-  //   ) override final;
-  // };
+    std::vector<ObjInfo<Bullet>>
+    fire(Player const& p, WorldContext const& ctx, float dt);
 
-  // struct SpreadFire : FireMode {
-  // float velocity = 500.0F;
-  //   std::vector<ObjInfo<Bullet>> fire(
-  //   Player const& p, WorldContext const& ctx, float dt
-  // ) override final;
-  // };
+  private:
+    static constexpr size_t count = 5;
+  };
+
+  struct HomingFire : FireMode {
+    float cooldown = 10;
+    float lifetime = 3.0F;
+    bool toggle = true;
+
+    std::vector<ObjInfo<Bullet>>
+    fire(Player const& p, WorldContext const& ctx, float dt);
+
+  private:
+    static constexpr size_t count = 2;
+  };
 
 }  //namespace kalika
 

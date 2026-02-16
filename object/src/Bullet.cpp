@@ -20,9 +20,7 @@ namespace kalika
     );
 
     // Orientation data
-    this->mov.up = info.dir;
-    this->mov.body_vel = info.velocity;
-
+    this->mov.setVelocity(info.velocity);
     this->update_frame();
   }
 
@@ -42,7 +40,7 @@ namespace kalika
       [&str_ctx](auto const& var) { return var.accel(str_ctx); },
       this->behaviour
     );
-    this->mov.set_vel(this->mov.velocity() + accel * dt);
+    this->mov.setVelocity(this->mov.velocity() + accel * dt);
     auto disp = this->mov.velocity() * dt;
     this->sprite.move(disp);
 
@@ -62,8 +60,7 @@ namespace kalika
 
     // Set parameters
     this->set_behaviour(info.obj_type);
-    this->mov.body_vel = info.velocity;
-    this->mov.up = info.dir;
+    this->mov.setVelocity(info.velocity);
     this->sprite.setPosition(info.position);
     this->lifetime = info.lifetime;
 

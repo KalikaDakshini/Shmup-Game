@@ -60,7 +60,7 @@ namespace kalika
     // Log to window
     void log();
     // Update logs
-    void update_log(std::string const& text);
+    void update_log(std::string const& text, bool override = false);
 
     // Clamp deadzone
     template<typename T>

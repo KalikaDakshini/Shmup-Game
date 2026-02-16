@@ -18,12 +18,13 @@ namespace kalika
     up({0.F, -1.F}),
     // Player Information
     player_(
-      Player::create(
-        {.position = sf::Vector2<float>(dimensions / 2U),
-         .velocity = static_cast<float>(dimensions.x) / 4.F,
-         .radius = static_cast<float>(dimensions.y) / 4.F,
-         .dir = up}
-      )
+      Player::create({
+        .position = sf::Vector2<float>(dimensions / 2U),
+        .vel_dir = {},
+        .vel_scale = static_cast<float>(dimensions.x) / 5.F,
+        .radius = static_cast<float>(dimensions.y) / 4.F,
+        .dir = up,
+      })
     ),
     wld_ctx(this->window_.getSize(), this->clock_)
   {
@@ -44,7 +45,7 @@ namespace kalika
     this->log_text_.setFillColor(sf::Color::Yellow);
 
     if (sf::Joystick::isConnected(0)) {
-      this->update_log("Joystick 0 connected");
+      this->update_log("Joystick 0 connected", true);
     }
   }
 
@@ -120,9 +121,9 @@ namespace kalika
   }
 
   // Update message logs
-  void SFMLApp::update_log(std::string const& text)
+  void SFMLApp::update_log(std::string const& text, bool override)
   {
-    if (this->frame_count < 30 && frame_count != 0) {
+    if (!override && this->frame_count < 30 && this->frame_count != 0) {
       return;
     }
 
@@ -162,6 +163,16 @@ namespace kalika
   void SFMLApp::handle(sf::Event::JoystickButtonPressed const& event)
   {
     this->update_log(std::format("Pressed Button: {}", event.button));
+    // Set fire modes
+    if (sf::Joystick::isButtonPressed(0, 1)) {
+      this->player_.set_mode<HomingFire>();
+    }
+    if (sf::Joystick::isButtonPressed(0, 2)) {
+      this->player_.set_mode<SpreadFire>();
+    }
+    if (sf::Joystick::isButtonPressed(0, 3)) {
+      this->player_.set_mode<RapidFire>();
+    }
   }
 
   template<typename T>
