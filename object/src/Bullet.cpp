@@ -25,9 +25,7 @@ namespace kalika
   }
 
   // Update bullet per frame
-  void Bullet::update(
-    WorldContext const& wld_ctx, SteerContext const& str_ctx, float dt
-  )
+  void Bullet::update(WorldContext const& wld_ctx, float dt)
   {
     // Update co-ordinate frame
     this->update_frame();
@@ -37,7 +35,7 @@ namespace kalika
 
     // Update kinetic data
     auto accel = std::visit(
-      [&str_ctx](auto const& var) { return var.accel(str_ctx); },
+      [&wld_ctx](auto const& var) { return var.accel(wld_ctx); },
       this->behaviour
     );
     this->mov.setVelocity(this->mov.velocity() + accel * dt);
@@ -71,8 +69,7 @@ namespace kalika
   // Updates co-ordinate data
   void Bullet::update_frame()
   {
-    if (std::fabsf(this->mov.up.lengthSquared() - 1.0F) >
-        internal::EPSILON) {
+    if (!equal(this->mov.up.lengthSquared(), 1.0F)) {
       this->mov.up = this->mov.up.normalized();
     }
     this->mov.right = this->mov.up.perpendicular().normalized();

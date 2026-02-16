@@ -23,7 +23,7 @@ namespace kalika
   struct Homing {
     internal::Tracker track;
 
-    sf::Vector2f accel(SteerContext const& ctx) const
+    sf::Vector2f accel(WorldContext const& ctx) const
     {
       return this->track.accel(ctx);
     }
@@ -31,7 +31,7 @@ namespace kalika
 
   // Straight Bullet
   struct Straight {
-    sf::Vector2f accel(SteerContext const&) const { return {}; }
+    sf::Vector2f accel(WorldContext const&) const { return {}; }
   };
 
   /**
@@ -49,9 +49,7 @@ namespace kalika
     /**
      * @brief Update the kinetic data
      */
-    void update(
-      WorldContext const& wld_ctx, SteerContext const& str_ctx, float dt
-    );
+    void update(WorldContext const& wld_ctx, float dt);
 
     /**
      * @brief Rebuild an object using info

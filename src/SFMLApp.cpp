@@ -15,7 +15,9 @@ namespace kalika
       sf::Style::Titlebar | sf::Style::Close
     ),
     // World axis
-    up({0.F, -1.F}),
+    up({
+      0.F, -1.F
+  }),
     // Player Information
     player_(
       Player::create({
@@ -26,7 +28,12 @@ namespace kalika
         .dir = up,
       })
     ),
-    wld_ctx(this->window_.getSize(), this->clock_)
+    wld_ctx(
+      this->clock_,
+      {{0.F, 0.F}, sf::Vector2f(this->window_.getSize())},
+      this->player_,
+      {}
+    )
   {
     // Window configuration
     this->window_.setFramerateLimit(60);
@@ -45,7 +52,7 @@ namespace kalika
     this->log_text_.setFillColor(sf::Color::Yellow);
 
     if (sf::Joystick::isConnected(0)) {
-      this->update_log("Joystick 0 connected", true);
+      this->update_log("Joystick 0 connected");
     }
   }
 
@@ -67,14 +74,13 @@ namespace kalika
       this->window_.handleEvents([this](auto const& event) {
         this->handle(event);
       });
-
-      // Custom even
       this->fire_check();
 
       // Move the objects
+      // Custom event
       this->player_.move(wld_ctx, dt);
       for (auto& obj : this->bullet_pool_) {
-        obj.update(this->wld_ctx, this->str_ctx, dt);
+        obj.update(this->wld_ctx, dt);
       }
 
       // Draw objects
@@ -112,7 +118,7 @@ namespace kalika
 
     // Log Object count
     this->log_text_.setPosition(
-      {static_cast<float>(x_disp), static_cast<float>(h - y_disp * 2)}
+      {static_cast<float>(x_disp), static_cast<float>(h - (y_disp * 2))}
     );
     this->log_text_.setString(
       std::format("Bullet Count: {}", this->bullet_pool_.size())
@@ -121,13 +127,8 @@ namespace kalika
   }
 
   // Update message logs
-  void SFMLApp::update_log(std::string const& text, bool override)
+  void SFMLApp::update_log(std::string const& text)
   {
-    if (!override && this->frame_count < 30 && this->frame_count != 0) {
-      return;
-    }
-
-    this->frame_count = 0;
     // Upper limit on messages
     if (this->logs_.size() == 12U) {
       this->logs_.pop_front();
@@ -202,7 +203,7 @@ namespace kalika
         this->player_.mov.strength, {pos, this->player_.mov.strength.y}
       );
     }
-    else if (event.axis == sf::Joystick::Axis::Y) {
+    if (event.axis == sf::Joystick::Axis::Y) {
       this->deadzone(
         this->player_.mov.strength, {this->player_.mov.strength.x, pos}
       );
@@ -213,11 +214,14 @@ namespace kalika
         this->player_.shoot.strength, {pos, this->player_.shoot.strength.y}
       );
     }
-    else if (event.axis == sf::Joystick::Axis::V) {
+    if (event.axis == sf::Joystick::Axis::V) {
       this->deadzone(
         this->player_.shoot.strength, {this->player_.shoot.strength.x, pos}
       );
     }
+
+    // this->update_log(print_vec("L", this->player_.shoot.strength));
+    // this->update_log(print_vec("R", this->player_.mov.strength));
   }
 
   // All remaining events

@@ -45,10 +45,10 @@ namespace kalika
   void Player::update_frame(WorldContext const& ctx, float dt)
   {
     // Rotate the frame
-    if (this->shoot.strength.lengthSquared() > internal::EPSILON) {
+    if (!equal(this->shoot.strength.lengthSquared(), 0.0F)) {
       this->mov.up = this->shoot.strength;
     }
-    if (fabsf(this->mov.up.lengthSquared() - 1.F) > internal::EPSILON) {
+    if (!equal(this->shoot.strength.lengthSquared(), 1.0F)) {
       this->mov.up = this->mov.up.normalized();
     }
     this->mov.right = this->mov.up.perpendicular().normalized();
@@ -107,53 +107,66 @@ namespace kalika
   std::vector<ObjInfo<Bullet>>
   Player::fire(WorldContext const& ctx, float dt) const
   {
-    return this->fire_mode(*this, ctx, dt);
+    return this->fire_mode(ctx, dt);
   }
 
   // Rapid fire bullets
   std::vector<ObjInfo<Bullet>>
-  RapidFire::fire(Player const& p, WorldContext const& ctx, float dt)
+  RapidFire::fire(WorldContext const& ctx, float dt)
   {
+    if (this->elapsed < this->cooldown) {
+      this->elapsed += 1;
+    }
+    else {
+      this->elapsed = 0;
+      this->spawn = true;
+    }
+
+    auto& p = ctx.player;
     std::vector<ObjInfo<Bullet>> infos;
-    // Generate bullets if not in cooldown
-    if (!in_cooldown) {
+    // Spawn bullets if cooldown has passed
+    if (this->spawn) {
+      this->spawn = false;
       // 1. Set positions of bullets
+      // Assume texture is a square
       auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
 
+      auto const start_pos = p.position();
       std::array<sf::Vector2f, RapidFire::count> const pos = {
-        p.body.getPosition() + (p.forward() + p.right()) * px * norm2,
-        p.body.getPosition() + (p.forward() - p.right()) * px * norm2,
+        start_pos + (p.forward() + p.right()) * px * norm2,
+        start_pos + (p.forward() - p.right()) * px * norm2,
       };
 
       auto dir = p.forward();
+      auto const new_vel = this->velocity * dir + p.right_vel();
 
       for (auto idx = 0UL; idx < RapidFire::count; idx++) {
-        auto const new_vel = this->velocity * dir + p.mov.velocity();
         infos.emplace_back(
           BulletType::STRAIGHT, pos[idx], new_vel, this->lifetime
         );
       }
-
-      // 3. Set timestamp
-      this->last_stamp = ctx.cur_time();
     }
-    // Toggle cooldown if passed
-    // 1. Record current time
-    auto const duration =
-      static_cast<float>(ctx.cur_time() - this->last_stamp);
-    // Set cooldown status
-    this->in_cooldown = (duration / (1000 * dt)) < this->cooldown;
 
     return infos;
   }
 
   // Rapid fire bullets
   std::vector<ObjInfo<Bullet>>
-  SpreadFire::fire(Player const& p, WorldContext const& ctx, float dt)
+  SpreadFire::fire(WorldContext const& ctx, float dt)
   {
+    if (this->elapsed < this->cooldown) {
+      this->elapsed += 1;
+    }
+    else {
+      this->elapsed = 0;
+      this->spawn = true;
+    }
+
+    auto& p = ctx.player;
     std::vector<ObjInfo<Bullet>> infos;
-    // Generate bullets if not in cooldown
-    if (!in_cooldown) {
+    // Spawn bullets if offset has passed
+    if (this->spawn) {
+      this->spawn = false;
       // 1. Set positions of bullets
       // Assume texture is a square
       auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
@@ -178,32 +191,33 @@ namespace kalika
 
       // 2. Generate info and add bullets
       for (auto idx = 0UL; idx < SpreadFire::count; idx++) {
-        auto const new_vel = this->velocity * dir[idx] + p.mov.velocity();
+        auto const new_vel = this->velocity * dir[idx] + p.right_vel();
         infos.emplace_back(
           BulletType::STRAIGHT, pos[idx], new_vel, this->lifetime
         );
       }
-
-      // 3. Set timestamp
-      this->last_stamp = ctx.cur_time();
     }
-    // Toggle cooldown if passed
-    // 1. Record current time
-    auto const duration =
-      static_cast<float>(ctx.cur_time() - this->last_stamp);
-    // Set cooldown status
-    this->in_cooldown = (duration / (1000 * dt)) < this->cooldown;
 
     return infos;
   }
 
   // Homing fire bullets
   std::vector<ObjInfo<Bullet>>
-  HomingFire::fire(Player const& p, WorldContext const& ctx, float dt)
+  HomingFire::fire(WorldContext const& ctx, float dt)
   {
+    if (this->elapsed < this->cooldown) {
+      this->elapsed += 1;
+    }
+    else {
+      this->elapsed = 0;
+      this->spawn = true;
+    }
+
+    auto& p = ctx.player;
     std::vector<ObjInfo<Bullet>> infos;
-    // Generate bullets if not in cooldown
-    if (!in_cooldown) {
+    // Spawn bullets if offset has passed
+    if (spawn) {
+      spawn = false;
       // 1. Set positions of bullets
       auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
 
@@ -216,7 +230,7 @@ namespace kalika
       };
 
       // 2. Generate info and add bullets
-      auto const new_vel = this->velocity * p.forward() + p.mov.velocity();
+      auto const new_vel = this->velocity * p.forward() + p.right_vel();
       if (toggle) {
         infos.emplace_back(
           BulletType::HOMING, pos[0], new_vel, this->lifetime
@@ -230,20 +244,10 @@ namespace kalika
 
       // Toggle Positions
       toggle = !toggle;
-
-      // 3. Set timestamp
-      this->last_stamp = ctx.cur_time();
     }
 
-    // Toggle cooldown if passed
-    // 1. Record current time
-    auto const duration =
-      static_cast<float>(ctx.cur_time() - this->last_stamp);
-    // Set cooldown status
-    this->in_cooldown = (duration / (1000 * dt)) < this->cooldown;
-
     return infos;
-  }  //namespace kalika
+  }
 
   sf::Vector2f Player::smoothen(sf::Vector2f vec, int factor)
   {

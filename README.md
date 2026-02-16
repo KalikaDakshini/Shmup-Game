@@ -7,9 +7,10 @@ A simple C++ twin stick shooter game.
 - [x] Implement Object Pooling
 - [ ] Split rendering and window?
 - [ ] Basic enemy type
-- [ ] Three firing modes
-  - [ ] Spread (pre-compute angles)
-  - [ ] Homing
+- [ ] Collisions
+- [x] Three firing modes
+  - [x] Spread (pre-compute angles)
+  - [x] Homing
   - [ ] Cluster
 - [ ] Dash functionality
 - [ ] Concentrated fire

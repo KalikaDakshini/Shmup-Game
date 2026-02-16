@@ -3,8 +3,8 @@
 
 #include <cmath>
 #include <filesystem>
+#include <functional>
 #include <memory>
-#include <tuple>
 #include <vector>
 
 #include <SFML/Graphics.hpp>
@@ -22,13 +22,12 @@ namespace kalika
 
   namespace internal
   {
-    // Fire functionality
-    template<typename Mode>
+    template<typename FiringMode>
     std::vector<ObjInfo<Bullet>>
-    fire_impl(Player const& player, WorldContext const& ctx, float dt)
+    fire_impl(WorldContext const& ctx, float dt)
     {
-      static Mode mode;
-      return mode.fire(player, ctx, dt);
+      static FiringMode mode;
+      return mode.fire(ctx, dt);
     }
   }  //namespace internal
 
@@ -57,24 +56,34 @@ namespace kalika
     sf::Sprite reticle;
     Reticle shoot;
     internal::Movable mov;
-    // FireMode selector
-    using FireFn = std::vector<ObjInfo<Bullet>> (*)(
-      Player const& player, WorldContext const& ctx, float dt
-    );
-    FireFn fire_mode = nullptr;
-
     // Constructor
     Player(PlayerInfo info);
 
     /**
      * @brief Return the forward direction
      */
-    sf::Vector2f const& forward() const { return this->mov.up; }
+    sf::Vector2f const position() const
+    {
+      return this->body.getPosition();
+    }
+
+    /**
+     * @brief Return the right component of the velocity vector
+     */
+    sf::Vector2f right_vel() const
+    {
+      return this->mov.velocity().dot(this->right()) * this->right();
+    }
+
+    /**
+     * @brief Return the forward direction
+     */
+    sf::Vector2f const forward() const { return this->mov.up; }
 
     /**
      * @brief Return the right direction
      */
-    sf::Vector2f const& right() const { return this->mov.right; }
+    sf::Vector2f const right() const { return this->mov.right; }
 
     /**
      * @brief Move and orient the ship in the corresponding direction
@@ -85,9 +94,9 @@ namespace kalika
      * @brief Set the firing  mode
      */
     // Set Firing mode
-    template<typename Mode> void set_mode()
+    template<typename FiringMode> void set_mode()
     {
-      this->fire_mode = &internal::fire_impl<Mode>;
+      this->fire_mode = internal::fire_impl<FiringMode>;
     }
 
     /**
@@ -106,11 +115,17 @@ namespace kalika
     static Player create(PlayerInfo info);
 
   private:
+    using FireFn =
+      std::vector<ObjInfo<Bullet>> (*)(WorldContext const& ctx, float dt);
+    FireFn fire_mode;
+
     // ====== Helper Functions ======= //
     // Update frame data
     void update_frame(WorldContext const& ctx, float dt);
+
     // Bind displacement to stay within the bounds
     void bind(sf::FloatRect bounds, sf::Vector2f& disp);
+
     // Smoothen inputs by quantizing them
     static sf::Vector2f smoothen(sf::Vector2f vec, int factor = 5U);
 
@@ -134,11 +149,15 @@ namespace kalika
    * @brief Class describing Firing mode
    */
   struct FireMode {
-    float cooldown = 5;
-    float lifetime = 1.0f;
-    int32_t last_stamp = 0;
-    bool in_cooldown = false;
-    float velocity = 1000.0F;
+    // Max distance between bullets
+    size_t cooldown = 10;
+    // Speed magnitue of a bullet
+    float velocity = 750.0F;
+    // Lifetime of a bullet
+    float lifetime = 1.0F;
+    // Flag to check if a new bullet is to be spawned
+    bool spawn = true;
+    size_t elapsed = 0;
 
   protected:
     static constexpr float norm1 = 0.8944F;
@@ -149,20 +168,26 @@ namespace kalika
    * @brief Rapid fire mode
    */
   struct RapidFire : FireMode {
-    float velocity = 1500.0F;
+    float velocity = 1000.0F;
+    size_t cooldown = 5;
 
-    std::vector<ObjInfo<Bullet>>
-    fire(Player const& p, WorldContext const& ctx, float dt);
+    /**
+     * @brief Generate bullet info from player's gun
+     */
+    std::vector<ObjInfo<Bullet>> fire(WorldContext const& ctx, float dt);
 
   private:
     static constexpr size_t count = 2;
   };
 
   struct SpreadFire : FireMode {
-    float lifetime = 0.3F;
+    size_t cooldown = 7;
+    float lifetime = 0.4F;
 
-    std::vector<ObjInfo<Bullet>>
-    fire(Player const& p, WorldContext const& ctx, float dt);
+    /**
+     * @brief Generate bullet info from player's gun
+     */
+    std::vector<ObjInfo<Bullet>> fire(WorldContext const& ctx, float dt);
 
   private:
     static constexpr size_t count = 5;
@@ -173,8 +198,10 @@ namespace kalika
     float lifetime = 3.0F;
     bool toggle = true;
 
-    std::vector<ObjInfo<Bullet>>
-    fire(Player const& p, WorldContext const& ctx, float dt);
+    /**
+     * @brief Generate bullet info from player's gun
+     */
+    std::vector<ObjInfo<Bullet>> fire(WorldContext const& ctx, float dt);
 
   private:
     static constexpr size_t count = 2;

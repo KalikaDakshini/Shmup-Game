@@ -2,38 +2,33 @@
 #define HELPERS_H
 
 #include <SFML/System.hpp>
+#include <cmath>
 #include <cstddef>
-#include <iostream>
-#include <optional>
+#include <vector>
 
 namespace kalika
 {
   using std::size_t;
 
-  /**
-   * @brief Context view of the world to steer objects
-   */
-  struct SteerContext {
-    using enemy_pos = sf::Vector2f;
-    std::vector<enemy_pos> positions;
-  };
+  // Forward declarations
+  struct Player;
+  struct Bullet;
+
+  inline bool equal(float f1, float f2)
+  {
+    return fabsf(f1 - f2) < 1e-6;
+  }
 
   /**
    * @brief Current state of the world
    */
   struct WorldContext {
-    sf::FloatRect world_size;
     sf::Clock& timer;
+    sf::FloatRect world_size;
+    Player& player;
+    std::vector<sf::Vector2f> enemy_pos;
 
-    WorldContext(sf::Vector2u size, sf::Clock& clock) :
-      world_size(sf::Vector2f(size) * 0.05F, sf::Vector2f(size)),
-      timer(clock)
-    {}
-
-    int32_t cur_time() const
-    {
-      return timer.getElapsedTime().asMilliseconds();
-    }
+    float cur_time() const { return timer.getElapsedTime().asSeconds(); }
   };
 
   // Object information to pass for construction
@@ -46,8 +41,6 @@ namespace kalika
 
   namespace internal
   {
-    constexpr float EPSILON = 1e-6;
-
     /**
      * @brief Movement information of the object
      */
@@ -82,7 +75,7 @@ namespace kalika
      */
     struct Tracker {
       // TODO(kalika): Implement this
-      sf::Vector2f accel(SteerContext const& ctx) const
+      sf::Vector2f accel(WorldContext const& ctx) const
       {
         (void)ctx;
         return {};

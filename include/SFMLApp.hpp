@@ -54,13 +54,12 @@ namespace kalika
 
     // Context objects
     WorldContext wld_ctx;
-    SteerContext str_ctx;
 
     // ======== Helper functions ======== //
     // Log to window
     void log();
     // Update logs
-    void update_log(std::string const& text, bool override = false);
+    void update_log(std::string const& text);
 
     // Clamp deadzone
     template<typename T>
