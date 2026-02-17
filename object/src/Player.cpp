@@ -24,7 +24,11 @@ namespace kalika
     this->mov.right = info.dir.perpendicular().normalized();
     this->mov.vel_dir = info.vel_dir;
     this->mov.vel_scale = info.vel_scale;
+
+    // Reticle position
     this->shoot.radius = info.radius;
+    this->shoot.resp = info.responsiveness;
+    this->shoot.cur_offset = this->shoot.radius * this->mov.up;
 
     // Size and colour
     this->body.scale({2.0F, 2.0F});
@@ -39,13 +43,14 @@ namespace kalika
   void Player::move(WorldContext const& ctx, float dt)
   {
     // Transform the co-ordinate frame to the new position
-    this->update_frame(ctx, dt);
+    this->update_body(ctx, dt);
+    this->update_reticle(ctx, dt);
   }
 
-  void Player::update_frame(WorldContext const& ctx, float dt)
+  void Player::update_body(WorldContext const& ctx, float dt)
   {
     // Rotate the frame
-    if (!equal(this->shoot.strength.lengthSquared(), 0.0F)) {
+    if (this->shoot.strength.lengthSquared() > 0.0F) {
       this->mov.up = this->shoot.strength;
     }
     if (!equal(this->shoot.strength.lengthSquared(), 1.0F)) {
@@ -54,7 +59,7 @@ namespace kalika
     this->mov.right = this->mov.up.perpendicular().normalized();
 
     // Transform the ship
-    if (this->mov.strength.lengthSquared() > 0) {
+    if (this->mov.strength.lengthSquared() > 0.0F) {
       this->mov.vel_dir = this->mov.strength.normalized();
     }
     else {
@@ -66,33 +71,49 @@ namespace kalika
     // Move the ship
     this->body.move(disp);
     this->body.setRotation(this->mov.up.angle() + sf::radians(M_PIf / 2));
+  }
 
-    // Disable the cursor when not moving
-    if (this->shoot.strength.lengthSquared() == 0) {
-      this->reticle.setColor(sf::Color::Transparent);
-      return;
-    }
-
-    this->reticle.setColor(sf::Color::Cyan);
-
+  void Player::update_reticle(WorldContext const& ctx, float dt)
+  {
     // Set reticle position
     sf::Vector2f ret_disp;
     if (this->mov.strength.lengthSquared() > 0) {
       ret_disp = -this->mov.strength.normalized();
     }
 
-    // Scale reticle displacement to resemble an ellipse
+    // Simulate reticle displacement to lag behind the ship
     auto const par_disp = ret_disp.projectedOnto(this->mov.up);
     auto const per_disp = ret_disp - par_disp;
-    auto const adjusted_disp =
-      (4.F * par_disp + 3.F * per_disp) * this->shoot.radius / 8.F;
-    auto const total_disp =
-      adjusted_disp + 1.5F * this->shoot.radius * this->mov.up;
+    auto const disp_vector = 0.5F * par_disp + 0.4F * per_disp;
+    auto const target_offset =
+      (disp_vector + this->mov.up) * this->shoot.radius;
 
-    // Move the reticle around
+    this->shoot.cur_offset +=
+      (target_offset - this->shoot.cur_offset) * this->shoot.resp * dt;
+
+    // Set reticle's position
     this->reticle.setPosition(
-      smoothen(this->body.getPosition() + total_disp, 3)
+      this->body.getPosition() + this->shoot.cur_offset
     );
+
+    // Set active state of the reticle
+    this->reticle.setColor(sf::Color::Transparent);
+    if ((this->shoot.strength.lengthSquared() > 0.F)) {
+      this->is_active() = true;
+    }
+    else if (this->is_active() &&
+             equal(
+               this->shoot.cur_offset.length(), this->shoot.radius, 2.0F
+             ) &&
+             this->shoot.update_timer(dt)) {
+      this->is_active() = false;
+      this->shoot.reset_timer();
+    }
+
+    // Set reticle display on
+    if (this->is_active()) {
+      this->reticle.setColor(sf::Color::Cyan);
+    }
   }
 
   void Player::bind(sf::FloatRect bounds, sf::Vector2f& disp)
@@ -114,18 +135,10 @@ namespace kalika
   std::vector<ObjInfo<Bullet>>
   RapidFire::fire(WorldContext const& ctx, float dt)
   {
-    if (this->elapsed < this->cooldown) {
-      this->elapsed += 1;
-    }
-    else {
-      this->elapsed = 0;
-      this->spawn = true;
-    }
-
     auto& p = ctx.player;
     std::vector<ObjInfo<Bullet>> infos;
     // Spawn bullets if cooldown has passed
-    if (this->spawn) {
+    if (this->spawn_check(dt)) {
       this->spawn = false;
       // 1. Set positions of bullets
       // Assume texture is a square
@@ -133,16 +146,16 @@ namespace kalika
 
       auto const start_pos = p.position();
       std::array<sf::Vector2f, RapidFire::count> const pos = {
-        start_pos + (p.forward() + p.right()) * px * norm2,
-        start_pos + (p.forward() - p.right()) * px * norm2,
+        start_pos + p.forward().rotatedBy(sf::degrees(45)) * px,
+        start_pos + p.forward().rotatedBy(sf::degrees(-45)) * px,
       };
-
-      auto dir = p.forward();
-      auto const new_vel = this->velocity * dir + p.right_vel();
 
       for (auto idx = 0UL; idx < RapidFire::count; idx++) {
         infos.emplace_back(
-          BulletType::STRAIGHT, pos[idx], new_vel, this->lifetime
+          BulletType::STRAIGHT,
+          pos[idx],
+          this->velocity * p.forward(),
+          this->lifetime
         );
       }
     }
@@ -154,18 +167,10 @@ namespace kalika
   std::vector<ObjInfo<Bullet>>
   SpreadFire::fire(WorldContext const& ctx, float dt)
   {
-    if (this->elapsed < this->cooldown) {
-      this->elapsed += 1;
-    }
-    else {
-      this->elapsed = 0;
-      this->spawn = true;
-    }
-
     auto& p = ctx.player;
     std::vector<ObjInfo<Bullet>> infos;
     // Spawn bullets if offset has passed
-    if (this->spawn) {
+    if (this->spawn_check(dt)) {
       this->spawn = false;
       // 1. Set positions of bullets
       // Assume texture is a square
@@ -173,25 +178,25 @@ namespace kalika
 
       // Set directions
       std::array<sf::Vector2f, SpreadFire::count> const dir = {
-        (p.forward() + p.right() / 2.F) * norm1,
-        (p.forward() + p.right()) * norm2,
-        (p.forward() - p.right() / 2.F) * norm1,
-        (p.forward() - p.right()) * norm2,
+        p.forward().rotatedBy(sf::degrees(-14)),
+        p.forward().rotatedBy(sf::degrees(-30)),
+        p.forward().rotatedBy(sf::degrees(15)),
+        p.forward().rotatedBy(sf::degrees(30)),
         p.forward(),
       };
 
       // Set positions
       std::array<sf::Vector2f, SpreadFire::count> const pos = {
-        p.body.getPosition() + (dir[0]) * px * norm1,
-        p.body.getPosition() + (dir[1]) * px * norm2,
-        p.body.getPosition() + (dir[2]) * px * norm1,
-        p.body.getPosition() + (dir[3]) * px * norm2,
+        p.body.getPosition() + (dir[0]) * px,
+        p.body.getPosition() + (dir[1]) * px,
+        p.body.getPosition() + (dir[2]) * px,
+        p.body.getPosition() + (dir[3]) * px,
         p.body.getPosition() + (dir[4]) * px / 2.F
       };
 
       // 2. Generate info and add bullets
       for (auto idx = 0UL; idx < SpreadFire::count; idx++) {
-        auto const new_vel = this->velocity * dir[idx] + p.right_vel();
+        auto const new_vel = this->velocity * dir[idx];
         infos.emplace_back(
           BulletType::STRAIGHT, pos[idx], new_vel, this->lifetime
         );
@@ -205,32 +210,20 @@ namespace kalika
   std::vector<ObjInfo<Bullet>>
   HomingFire::fire(WorldContext const& ctx, float dt)
   {
-    if (this->elapsed < this->cooldown) {
-      this->elapsed += 1;
-    }
-    else {
-      this->elapsed = 0;
-      this->spawn = true;
-    }
-
     auto& p = ctx.player;
     std::vector<ObjInfo<Bullet>> infos;
     // Spawn bullets if offset has passed
-    if (spawn) {
-      spawn = false;
+    if (this->spawn_check(dt)) {
       // 1. Set positions of bullets
       auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
 
-      auto dir1 = (p.forward() + p.right()) * norm2;
-      auto dir2 = (p.forward() - p.right()) * norm2;
-
       std::array<sf::Vector2f, HomingFire::count> const pos = {
-        p.body.getPosition() + dir1 * px / 2.F,
-        p.body.getPosition() + dir2 * px / 2.F
+        p.position() + p.forward().rotatedBy(sf::degrees(45)) * px,
+        p.position() + p.forward().rotatedBy(sf::degrees(-45)) * px,
       };
 
       // 2. Generate info and add bullets
-      auto const new_vel = this->velocity * p.forward() + p.right_vel();
+      auto const new_vel = this->velocity * p.forward();
       if (toggle) {
         infos.emplace_back(
           BulletType::HOMING, pos[0], new_vel, this->lifetime
@@ -247,16 +240,6 @@ namespace kalika
     }
 
     return infos;
-  }
-
-  sf::Vector2f Player::smoothen(sf::Vector2f vec, int factor)
-  {
-    auto smoothen = [&factor](float x) {
-      auto xi = static_cast<int>(x);
-      return static_cast<float>(xi - (xi % factor));
-    };
-
-    return {smoothen(vec.x), smoothen(vec.y)};
   }
 
   // Build player object

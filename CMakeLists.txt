@@ -56,3 +56,7 @@ target_link_libraries(${MAIN_TARGET} PRIVATE SFML::Graphics)
 # Link library object
 add_subdirectory(object)
 target_link_libraries(${MAIN_TARGET} PRIVATE object)
+
+# Link library window
+add_subdirectory(window)
+target_link_libraries(${MAIN_TARGET} PRIVATE window)

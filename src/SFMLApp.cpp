@@ -25,6 +25,7 @@ namespace kalika
         .vel_dir = {},
         .vel_scale = static_cast<float>(dimensions.x) / 5.F,
         .radius = static_cast<float>(dimensions.y) / 4.F,
+        .responsiveness = 2.F,
         .dir = up,
       })
     ),
@@ -121,7 +122,7 @@ namespace kalika
       {static_cast<float>(x_disp), static_cast<float>(h - (y_disp * 2))}
     );
     this->log_text_.setString(
-      std::format("Bullet Count: {}", this->bullet_pool_.size())
+      std::format("Bullet Count: {}", this->bullet_pool_.capacity())
     );
     this->window_.draw(this->log_text_);
   }
@@ -192,10 +193,6 @@ namespace kalika
 
   void SFMLApp::handle(sf::Event::JoystickMoved const& event)
   {
-    // auto print_vec = [](auto const& id, auto const& vec) {
-    //   return std::format("{}: {}, {}\n", id, vec.x, vec.y);
-    // };
-
     // Control movement
     float const pos = event.position;
     if (event.axis == sf::Joystick::Axis::X) {
@@ -219,7 +216,9 @@ namespace kalika
         this->player_.shoot.strength, {this->player_.shoot.strength.x, pos}
       );
     }
-
+    // auto print_vec = [](auto const& id, auto const& vec) {
+    //   return std::format("{}: {}, {}\n", id, vec.x, vec.y);
+    // };
     // this->update_log(print_vec("L", this->player_.shoot.strength));
     // this->update_log(print_vec("R", this->player_.mov.strength));
   }

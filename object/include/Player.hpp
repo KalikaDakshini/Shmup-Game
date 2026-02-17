@@ -17,7 +17,6 @@
 namespace kalika
 {
   // Forward declarations
-  struct FireMode;
   struct Player;
 
   namespace internal
@@ -37,6 +36,7 @@ namespace kalika
     sf::Vector2f vel_dir;
     float vel_scale;
     float radius;
+    float responsiveness;
     sf::Vector2f dir;
   };
 
@@ -49,7 +49,24 @@ namespace kalika
      */
     struct Reticle {
       sf::Vector2f strength;
+      float resp;
       float radius;
+
+      // State variables
+      bool active_ = false;
+      sf::Vector2f cur_offset = {};
+
+      // Timer functionality
+      float const duration = 3.0F;
+      float elapsed = duration;
+
+      bool update_timer(float dt)
+      {
+        this->elapsed -= dt;
+        return (this->elapsed > 0.0F);
+      }
+
+      void reset_timer() { this->elapsed = this->duration; }
     };
 
     sf::Sprite body;
@@ -121,13 +138,16 @@ namespace kalika
 
     // ====== Helper Functions ======= //
     // Update frame data
-    void update_frame(WorldContext const& ctx, float dt);
+    void update_body(WorldContext const& ctx, float dt);
+    void update_reticle(WorldContext const& ctx, float dt);
 
     // Bind displacement to stay within the bounds
     void bind(sf::FloatRect bounds, sf::Vector2f& disp);
 
-    // Smoothen inputs by quantizing them
-    static sf::Vector2f smoothen(sf::Vector2f vec, int factor = 5U);
+    // Check if the reticle should be active
+    bool is_active() const { return this->shoot.active_; }
+
+    bool& is_active() { return this->shoot.active_; }
 
     // Texture Cache
     static sf::Texture& body_texture()
@@ -148,28 +168,51 @@ namespace kalika
   /**
    * @brief Class describing Firing mode
    */
-  struct FireMode {
+  template<typename Mode> struct FireMode {
     // Max distance between bullets
-    size_t cooldown = 10;
+    float distance = 100.F;
     // Speed magnitue of a bullet
     float velocity = 750.0F;
-    // Lifetime of a bullet
+    // Lifetime of a bullet in seconds
     float lifetime = 1.0F;
-    // Flag to check if a new bullet is to be spawned
+    // Flags to check if a new bullet is to be spawned
     bool spawn = true;
-    size_t elapsed = 0;
+    float elapsed = 0.F;
 
   protected:
-    static constexpr float norm1 = 0.8944F;
-    static constexpr float norm2 = 0.7071F;
+    constexpr float fire_interval()
+    {
+      return this->distance / this->velocity;
+    }
+
+    /**
+     * @brief Sets spawn to true based on fire rate
+     */
+    bool spawn_check(float dt)
+    {
+      auto& mode = static_cast<Mode&>(*this);
+      mode.spawn = false;
+      mode.elapsed += dt;
+
+      if (mode.elapsed >= mode.fire_interval()) {
+        mode.elapsed -= mode.fire_interval();
+        mode.spawn = true;
+      }
+
+      return mode.spawn;
+    }
+
+  private:
+    FireMode() = default;
+    friend Mode;
   };
 
   /**
    * @brief Rapid fire mode
    */
-  struct RapidFire : FireMode {
+  struct RapidFire : FireMode<RapidFire> {
     float velocity = 1000.0F;
-    size_t cooldown = 5;
+    float distance = 50.F;
 
     /**
      * @brief Generate bullet info from player's gun
@@ -177,11 +220,11 @@ namespace kalika
     std::vector<ObjInfo<Bullet>> fire(WorldContext const& ctx, float dt);
 
   private:
+    using FireMode::spawn_check;
     static constexpr size_t count = 2;
   };
 
-  struct SpreadFire : FireMode {
-    size_t cooldown = 7;
+  struct SpreadFire : FireMode<SpreadFire> {
     float lifetime = 0.4F;
 
     /**
@@ -190,11 +233,12 @@ namespace kalika
     std::vector<ObjInfo<Bullet>> fire(WorldContext const& ctx, float dt);
 
   private:
+    using FireMode::spawn_check;
     static constexpr size_t count = 5;
   };
 
-  struct HomingFire : FireMode {
-    float cooldown = 10;
+  struct HomingFire : FireMode<HomingFire> {
+    float distance = 200.F;
     float lifetime = 3.0F;
     bool toggle = true;
 
@@ -204,6 +248,7 @@ namespace kalika
     std::vector<ObjInfo<Bullet>> fire(WorldContext const& ctx, float dt);
 
   private:
+    using FireMode::spawn_check;
     static constexpr size_t count = 2;
   };
 

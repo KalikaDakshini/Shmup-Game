@@ -29,7 +29,15 @@ namespace kalika
      */
     void release();
 
+    /**
+     * @brief Number of active objects in the pool
+     */
     size_t size() const { return this->last_; }
+
+    /**
+     * @brief Return the current size of the pool
+     */
+    size_t capacity() const { return this->objects_.size(); }
 
     using iterator = std::vector<Object>::iterator;
     using const_iterator = std::vector<Object>::const_iterator;

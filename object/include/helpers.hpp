@@ -4,6 +4,7 @@
 #include <SFML/System.hpp>
 #include <cmath>
 #include <cstddef>
+#include <iostream>
 #include <vector>
 
 namespace kalika
@@ -14,9 +15,9 @@ namespace kalika
   struct Player;
   struct Bullet;
 
-  inline bool equal(float f1, float f2)
+  inline bool equal(float f1, float f2, float threshold = 1e-3)
   {
-    return fabsf(f1 - f2) < 1e-6;
+    return fabsf(f1 - f2) < threshold;
   }
 
   /**
