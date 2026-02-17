@@ -13,6 +13,7 @@ target_sources(object
 	BASE_DIRS include/
 	FILES
 	include/Object.hpp
+	include/Behaviour.hpp
 )
 
 # Enable Testing

@@ -1,121 +1,35 @@
 #ifndef BULLET_H
 #define BULLET_H
 
-#include <SFML/Graphics.hpp>
-#include <array>
-#include <cstddef>
-#include <filesystem>
-#include <memory>
-#include <variant>
+#include <type_traits>
 
+#include "ObjBase.hpp"
 #include "helpers.hpp"
 
 namespace kalika
 {
-  enum class BulletType : std::uint8_t {
-    STRAIGHT,
-    HOMING,
-    CLUSTER,
-    NUM_TYPES
-  };
-
-  // Homing Bullet
-  struct Homing {
-    internal::Tracker track;
-
-    sf::Vector2f accel(WorldContext const& ctx) const
-    {
-      return this->track.accel(ctx);
-    }
-  };
-
-  // Straight Bullet
-  struct Straight {
-    sf::Vector2f accel(WorldContext const&) const { return {}; }
-  };
-
-  /**
-   * @brief Bullet object
-   */
-  struct Bullet {
-    sf::Sprite sprite;
-    internal::Movable mov;
+  struct Bullet : internal::ObjBase<Bullet> {
+    // Lifetime of the object
+    float lifetime_;
 
     // Constructor
-    Bullet(ObjInfo<Bullet> info);
-
-    using type = BulletType;
-
-    /**
-     * @brief Update the kinetic data
-     */
-    void update(WorldContext const& wld_ctx, float dt);
+    Bullet(ObjInfo const& info) :
+      ObjBase<Bullet>(info), lifetime_(info.lifetime)
+    {
+      static_assert(std::is_move_assignable_v<internal::Movable>);
+    }
 
     /**
-     * @brief Rebuild an object using info
+     * @brief Update the object status by a frame
      */
-    void rebuild(ObjInfo<Bullet> info);
+    void update(WorldContext const& ctx, float dt);
 
-    /**
-     * @brief Check if bullet is still alive
-     */
-    bool isAlive() const { return this->alive; }
-
-    // Factory function for making a Bullet
-    static Bullet create(ObjInfo<Bullet> info);
-
-  private:
-    bool alive = true;
-    float lifetime;
-    using BulletVariant = std::variant<Homing, Straight>;
-    BulletVariant behaviour;
-
-    // ====== Helper functions ====== //
-    void update_frame();
-
-    // Check if bullet is alive
+    // Check if the bullet is alive and toggle it
     void set_alive(WorldContext const& ctx);
 
-    void set_behaviour(BulletType type);
+    // Rebuild an inactive object
+    void rebuild(ObjInfo const& info);
   };
-
-  /**
-   * @brief Specialized template for bullet
-   */
-
-  template<> struct ObjInfo<Bullet> {
-    Bullet::type obj_type;
-    sf::Vector2f position;
-    sf::Vector2f velocity;
-    float lifetime = 1.0F;
-  };
-
-  /**
-   * @brief Texture Cache
-   */
-  struct TextureStore {
-    static sf::Texture& get_tex(BulletType type)
-    {
-      static std::array<
-        sf::Texture,
-        static_cast<size_t>(BulletType::NUM_TYPES)>
-        textures = [] {
-          std::
-            array<sf::Texture, static_cast<size_t>(BulletType::NUM_TYPES)>
-              texs;
-          (void)texs[static_cast<size_t>(BulletType::STRAIGHT)]
-            .loadFromFile("resources/bullet.png");
-          (void)texs[static_cast<size_t>(BulletType::CLUSTER)]
-            .loadFromFile("resources/bullet.png");
-          (void)texs[static_cast<size_t>(BulletType::HOMING)].loadFromFile(
-            "resources/bullet.png"
-          );
-          return texs;
-        }();
-      return textures[static_cast<size_t>(type)];
-    }
-  };
-
 }  //namespace kalika
 
 #endif

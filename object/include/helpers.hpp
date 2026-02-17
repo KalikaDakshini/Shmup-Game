@@ -32,14 +32,6 @@ namespace kalika
     float cur_time() const { return timer.getElapsedTime().asSeconds(); }
   };
 
-  // Object information to pass for construction
-  template<typename Object> struct ObjInfo {
-    Object::type obj_type;
-    sf::Vector2f position;
-    float velocity;
-    sf::Vector2f dir;
-  };
-
   namespace internal
   {
     /**
@@ -68,18 +60,6 @@ namespace kalika
         this->vel_scale = velocity.length();
         this->vel_dir = velocity.normalized();
         this->up = this->vel_dir;
-      }
-    };
-
-    /**
-     * @brief Homing behaviour
-     */
-    struct Tracker {
-      // TODO(kalika): Implement this
-      sf::Vector2f accel(WorldContext const& ctx) const
-      {
-        (void)ctx;
-        return {};
       }
     };
 

@@ -12,7 +12,7 @@ namespace kalika
 {
   namespace internal
   {
-    template<typename Object> Object build_object(ObjInfo<Object> info)
+    template<typename Object> Object build_object(ObjInfo const& info)
     {
       return Object::create(info);
     }
@@ -22,7 +22,7 @@ namespace kalika
     /**
      * @brief Get an object from the pool
      */
-    void get(ObjInfo<Object> info);
+    void get(ObjInfo info);
 
     /**
      * @brief Retire an object from the pool
@@ -58,8 +58,8 @@ namespace kalika
     size_t last_ = 0UL;
   };
 
-  template<typename Object>
-  void ObjectPool<Object>::get(ObjInfo<Object> info)
+  // Get an object from pool, adding if there are no objects
+  template<typename Object> void ObjectPool<Object>::get(ObjInfo info)
   {
     // Add a new object if pool is full
     if (this->last_ == this->objects_.size()) {
@@ -81,7 +81,7 @@ namespace kalika
     while (idx < this->last_) {
       auto& obj = this->objects_[idx++];
       // Swap retired objects with the last active object
-      if (!(obj.isAlive())) {
+      if (!(obj.is_alive())) {
         std::swap(obj, this->objects_[--this->last_]);
       }
     }

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 4.0)
 project("CPP Project" LANGUAGES CXX)
 
 # Set variables
-set(MAIN_TARGET "renderer")
+set(MAIN_TARGET "smol-shmup")
 set(BIN_DIR "./bin")
 set(TST_DIR "./tests")
 
@@ -56,7 +56,3 @@ target_link_libraries(${MAIN_TARGET} PRIVATE SFML::Graphics)
 # Link library object
 add_subdirectory(object)
 target_link_libraries(${MAIN_TARGET} PRIVATE object)
-
-# Link library window
-add_subdirectory(window)
-target_link_libraries(${MAIN_TARGET} PRIVATE window)

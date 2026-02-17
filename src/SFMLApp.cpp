@@ -25,7 +25,7 @@ namespace kalika
         .vel_dir = {},
         .vel_scale = static_cast<float>(dimensions.x) / 5.F,
         .radius = static_cast<float>(dimensions.y) / 4.F,
-        .responsiveness = 2.F,
+        .responsiveness = 4.F,
         .dir = up,
       })
     ),
@@ -143,7 +143,7 @@ namespace kalika
     if (this->player_.shoot.strength.lengthSquared() > 0) {
       std::ranges::for_each(
         this->player_.fire(this->wld_ctx, dt),
-        [this](auto const& info) { this->bullet_pool_.get(info); }
+        [this](auto& info) { this->bullet_pool_.get(info); }
       );
     }
   }
@@ -167,7 +167,7 @@ namespace kalika
     this->update_log(std::format("Pressed Button: {}", event.button));
     // Set fire modes
     if (sf::Joystick::isButtonPressed(0, 1)) {
-      this->player_.set_mode<HomingFire>();
+      this->player_.set_mode<ChaserFire>();
     }
     if (sf::Joystick::isButtonPressed(0, 2)) {
       this->player_.set_mode<SpreadFire>();

@@ -5,11 +5,34 @@
 
 namespace kalika
 {
+  namespace internal
+  {
+    sf::Texture& body_texture()
+    {
+      static sf::Texture t;
+      (void)t.loadFromFile("resources/player.png");
+      return t;
+    }
+
+    sf::Texture& reticle_texture()
+    {
+      static sf::Texture t;
+      (void)t.loadFromFile("resources/reticle.png");
+      return t;
+    }
+
+    sf::Texture& bullet_texture()
+    {
+      static sf::Texture t;
+      (void)t.loadFromFile("resources/bullet.png");
+      return t;
+    }
+  }  // namespace internal
 
   // ====== Player Functions ====== //
   // Constructor
   Player::Player(PlayerInfo info) :
-    body(body_texture()), reticle(reticle_texture())
+    body(internal::body_texture()), reticle(internal::reticle_texture())
   {
     // Load sprites
     auto const tex_size = this->body.getTexture().getSize();
@@ -44,7 +67,7 @@ namespace kalika
   {
     // Transform the co-ordinate frame to the new position
     this->update_body(ctx, dt);
-    this->update_reticle(ctx, dt);
+    this->update_reticle(dt);
   }
 
   void Player::update_body(WorldContext const& ctx, float dt)
@@ -73,7 +96,7 @@ namespace kalika
     this->body.setRotation(this->mov.up.angle() + sf::radians(M_PIf / 2));
   }
 
-  void Player::update_reticle(WorldContext const& ctx, float dt)
+  void Player::update_reticle(float dt)
   {
     // Set reticle position
     sf::Vector2f ret_disp;
@@ -84,7 +107,7 @@ namespace kalika
     // Simulate reticle displacement to lag behind the ship
     auto const par_disp = ret_disp.projectedOnto(this->mov.up);
     auto const per_disp = ret_disp - par_disp;
-    auto const disp_vector = 0.5F * par_disp + 0.4F * per_disp;
+    auto const disp_vector = (0.5F * par_disp) + (0.4F * per_disp);
     auto const target_offset =
       (disp_vector + this->mov.up) * this->shoot.radius;
 
@@ -125,18 +148,17 @@ namespace kalika
   }
 
   // Fire ship's guns
-  std::vector<ObjInfo<Bullet>>
+  std::vector<ObjInfo>
   Player::fire(WorldContext const& ctx, float dt) const
   {
     return this->fire_mode(ctx, dt);
   }
 
   // Rapid fire bullets
-  std::vector<ObjInfo<Bullet>>
-  RapidFire::fire(WorldContext const& ctx, float dt)
+  std::vector<ObjInfo> RapidFire::fire(WorldContext const& ctx, float dt)
   {
     auto& p = ctx.player;
-    std::vector<ObjInfo<Bullet>> infos;
+    std::vector<ObjInfo> infos;
     // Spawn bullets if cooldown has passed
     if (this->spawn_check(dt)) {
       this->spawn = false;
@@ -152,7 +174,8 @@ namespace kalika
 
       for (auto idx = 0UL; idx < RapidFire::count; idx++) {
         infos.emplace_back(
-          BulletType::STRAIGHT,
+          get_behaviour<Straight>(),
+          internal::bullet_texture(),
           pos[idx],
           this->velocity * p.forward(),
           this->lifetime
@@ -164,11 +187,10 @@ namespace kalika
   }
 
   // Rapid fire bullets
-  std::vector<ObjInfo<Bullet>>
-  SpreadFire::fire(WorldContext const& ctx, float dt)
+  std::vector<ObjInfo> SpreadFire::fire(WorldContext const& ctx, float dt)
   {
     auto& p = ctx.player;
-    std::vector<ObjInfo<Bullet>> infos;
+    std::vector<ObjInfo> infos;
     // Spawn bullets if offset has passed
     if (this->spawn_check(dt)) {
       this->spawn = false;
@@ -198,7 +220,11 @@ namespace kalika
       for (auto idx = 0UL; idx < SpreadFire::count; idx++) {
         auto const new_vel = this->velocity * dir[idx];
         infos.emplace_back(
-          BulletType::STRAIGHT, pos[idx], new_vel, this->lifetime
+          get_behaviour<Straight>(),
+          internal::bullet_texture(),
+          pos[idx],
+          new_vel,
+          this->lifetime
         );
       }
     }
@@ -207,33 +233,26 @@ namespace kalika
   }
 
   // Homing fire bullets
-  std::vector<ObjInfo<Bullet>>
-  HomingFire::fire(WorldContext const& ctx, float dt)
+  std::vector<ObjInfo> ChaserFire::fire(WorldContext const& ctx, float dt)
   {
     auto& p = ctx.player;
-    std::vector<ObjInfo<Bullet>> infos;
+    std::vector<ObjInfo> infos;
     // Spawn bullets if offset has passed
     if (this->spawn_check(dt)) {
       // 1. Set positions of bullets
       auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
 
-      std::array<sf::Vector2f, HomingFire::count> const pos = {
-        p.position() + p.forward().rotatedBy(sf::degrees(45)) * px,
-        p.position() + p.forward().rotatedBy(sf::degrees(-45)) * px,
-      };
-
       // 2. Generate info and add bullets
       auto const new_vel = this->velocity * p.forward();
-      if (toggle) {
-        infos.emplace_back(
-          BulletType::HOMING, pos[0], new_vel, this->lifetime
-        );
-      }
-      else {
-        infos.emplace_back(
-          BulletType::HOMING, pos[1], new_vel, this->lifetime
-        );
-      }
+      auto angle = toggle ? sf::degrees(45) : sf::degrees(-45);
+
+      infos.emplace_back(
+        get_behaviour<Chaser>(),
+        internal::bullet_texture(),
+        p.position() + p.forward().rotatedBy(angle) * px,
+        new_vel,
+        this->lifetime
+      );
 
       // Toggle Positions
       toggle = !toggle;

@@ -11,7 +11,7 @@
 #include <SFML/System.hpp>
 #include <memory>
 
-#include "Bullet.hpp"
+#include "ObjBase.hpp"
 #include "helpers.hpp"
 
 namespace kalika
@@ -21,9 +21,16 @@ namespace kalika
 
   namespace internal
   {
+    // Texture cache for objects
+    sf::Texture& body_texture();
+
+    sf::Texture& reticle_texture();
+
+    sf::Texture& bullet_texture();
+
+    // Base CRTP template for firing modes
     template<typename FiringMode>
-    std::vector<ObjInfo<Bullet>>
-    fire_impl(WorldContext const& ctx, float dt)
+    std::vector<ObjInfo> fire_impl(WorldContext const& ctx, float dt)
     {
       static FiringMode mode;
       return mode.fire(ctx, dt);
@@ -119,8 +126,7 @@ namespace kalika
     /**
      * @brief Fire bullets at a specified rate
      */
-    std::vector<ObjInfo<Bullet>>
-    fire(WorldContext const& ctx, float dt) const;
+    std::vector<ObjInfo> fire(WorldContext const& ctx, float dt) const;
 
     /**
      * @brief Create a player object
@@ -133,13 +139,13 @@ namespace kalika
 
   private:
     using FireFn =
-      std::vector<ObjInfo<Bullet>> (*)(WorldContext const& ctx, float dt);
+      std::vector<ObjInfo> (*)(WorldContext const& ctx, float dt);
     FireFn fire_mode;
 
     // ====== Helper Functions ======= //
     // Update frame data
     void update_body(WorldContext const& ctx, float dt);
-    void update_reticle(WorldContext const& ctx, float dt);
+    void update_reticle(float dt);
 
     // Bind displacement to stay within the bounds
     void bind(sf::FloatRect bounds, sf::Vector2f& disp);
@@ -148,21 +154,6 @@ namespace kalika
     bool is_active() const { return this->shoot.active_; }
 
     bool& is_active() { return this->shoot.active_; }
-
-    // Texture Cache
-    static sf::Texture& body_texture()
-    {
-      static sf::Texture t;
-      (void)t.loadFromFile("resources/player.png");
-      return t;
-    }
-
-    static sf::Texture& reticle_texture()
-    {
-      static sf::Texture t;
-      (void)t.loadFromFile("resources/reticle.png");
-      return t;
-    }
   };
 
   /**
@@ -217,10 +208,9 @@ namespace kalika
     /**
      * @brief Generate bullet info from player's gun
      */
-    std::vector<ObjInfo<Bullet>> fire(WorldContext const& ctx, float dt);
+    std::vector<ObjInfo> fire(WorldContext const& ctx, float dt);
 
   private:
-    using FireMode::spawn_check;
     static constexpr size_t count = 2;
   };
 
@@ -230,14 +220,13 @@ namespace kalika
     /**
      * @brief Generate bullet info from player's gun
      */
-    std::vector<ObjInfo<Bullet>> fire(WorldContext const& ctx, float dt);
+    std::vector<ObjInfo> fire(WorldContext const& ctx, float dt);
 
   private:
-    using FireMode::spawn_check;
     static constexpr size_t count = 5;
   };
 
-  struct HomingFire : FireMode<HomingFire> {
+  struct ChaserFire : FireMode<ChaserFire> {
     float distance = 200.F;
     float lifetime = 3.0F;
     bool toggle = true;
@@ -245,11 +234,10 @@ namespace kalika
     /**
      * @brief Generate bullet info from player's gun
      */
-    std::vector<ObjInfo<Bullet>> fire(WorldContext const& ctx, float dt);
+    std::vector<ObjInfo> fire(WorldContext const& ctx, float dt);
 
   private:
-    using FireMode::spawn_check;
-    static constexpr size_t count = 2;
+    static constexpr size_t count = 1;
   };
 
 }  //namespace kalika
