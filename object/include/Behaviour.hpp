@@ -34,11 +34,32 @@ namespace kalika
   /**
    * @brief Straight path
    */
-  struct Straight : internal::Behaviour<Straight> {
-    sf::Vector2f accel(WorldContext const& ctx) const
+  struct Dasher : internal::Behaviour<Dasher> {
+    [[nodiscard]] sf::Vector2f accel(WorldContext const& ctx) const
     {
       (void)ctx;
       return {};
+    }
+
+    [[nodiscard]] sf::Vector2f bound_velocity(
+      WorldContext const& ctx, sf::Vector2f position, sf::Vector2f velocity
+    ) const
+    {
+      auto [px, py] = position;
+      auto [lx, ly] = ctx.world_size.position;
+      auto [rx, ry] = ctx.world_size.size;
+      auto [vx, vy] = velocity;
+
+      // Flip the velocity when moving towards the boundary
+      if ((equal(px, lx, 10.F) && vx < 0.F) ||
+          (equal(px, rx, 10.F) && vx > 0.F)) {
+        return {-vx, vy};
+      }
+      else if ((equal(py, ly, 10.F) && vy < 0.F) ||
+               (equal(py, ry, 10.F) && vy > 0.F)) {
+        return {vx, -vy};
+      }
+      return {vx, vy};
     }
   };
 
@@ -46,9 +67,19 @@ namespace kalika
    * @brief Hunts down the nearest enemy
    */
   struct Chaser : internal::Behaviour<Chaser> {
-    sf::Vector2f accel(WorldContext const& ctx) const
+    [[nodiscard]] sf::Vector2f accel(WorldContext const& ctx) const
     {
       (void)ctx;
+      return {};
+    }
+
+    [[nodiscard]] sf::Vector2f bound_velocity(
+      WorldContext const& ctx, sf::Vector2f position, sf::Vector2f velocity
+    ) const
+    {
+      (void)ctx;
+      (void)position;
+      (void)velocity;
       return {};
     }
   };
@@ -56,7 +87,7 @@ namespace kalika
   /**
    * @brief Chases towards the target
    */
-  using BehaviourVariant = std::variant<Straight, Chaser>;
+  using BehaviourVariant = std::variant<Dasher, Chaser>;
 
   template<typename VariantMode> BehaviourVariant get_behaviour()
   {

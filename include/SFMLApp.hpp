@@ -12,6 +12,7 @@
 #include <SFML/System.hpp>
 
 #include "Bullet.hpp"
+#include "Enemy.hpp"
 #include "Object.hpp"
 #include "Player.hpp"
 
@@ -51,6 +52,7 @@ namespace kalika
     // Objects
     Player player_;
     ObjectPool<Bullet> bullet_pool_;
+    ObjectPool<Enemy> enemy_pool_;
 
     // Context objects
     WorldContext wld_ctx;

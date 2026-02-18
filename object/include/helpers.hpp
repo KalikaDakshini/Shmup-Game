@@ -20,6 +20,12 @@ namespace kalika
     return fabsf(f1 - f2) < threshold;
   }
 
+  inline void load_texture(sf::Texture& t, std::filesystem::path path)
+  {
+    (void)t.loadFromFile(path);
+    t.setSmooth(false);
+  }
+
   /**
    * @brief Current state of the world
    */
@@ -27,6 +33,7 @@ namespace kalika
     sf::Clock& timer;
     sf::FloatRect world_size;
     Player& player;
+    size_t& frame_count;
     std::vector<sf::Vector2f> enemy_pos;
 
     float cur_time() const { return timer.getElapsedTime().asSeconds(); }

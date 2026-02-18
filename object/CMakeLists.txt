@@ -7,6 +7,7 @@ target_sources(object
 	PRIVATE
 	src/Player.cpp
 	src/Bullet.cpp
+	src/Enemy.cpp
 
 	PUBLIC
 	FILE_SET HEADERS

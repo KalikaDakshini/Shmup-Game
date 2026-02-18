@@ -12,13 +12,6 @@ namespace kalika
     // Lifetime of the object
     float lifetime_;
 
-    // Constructor
-    Bullet(ObjInfo const& info) :
-      ObjBase<Bullet>(info), lifetime_(info.lifetime)
-    {
-      static_assert(std::is_move_assignable_v<internal::Movable>);
-    }
-
     /**
      * @brief Update the object status by a frame
      */
@@ -29,6 +22,14 @@ namespace kalika
 
     // Rebuild an inactive object
     void rebuild(ObjInfo const& info);
+
+    static Bullet create(ObjInfo const& info) { return info; }
+
+  private:
+    // Constructor
+    Bullet(ObjInfo const& info) :
+      ObjBase<Bullet>(info), lifetime_(info.lifetime)
+    {}
   };
 }  //namespace kalika
 

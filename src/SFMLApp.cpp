@@ -15,9 +15,7 @@ namespace kalika
       sf::Style::Titlebar | sf::Style::Close
     ),
     // World axis
-    up({
-      0.F, -1.F
-  }),
+    up({0.F, -1.F}),
     // Player Information
     player_(
       Player::create({
@@ -30,9 +28,23 @@ namespace kalika
       })
     ),
     wld_ctx(
+      // Clock
       this->clock_,
-      {{0.F, 0.F}, sf::Vector2f(this->window_.getSize())},
+      // World Boundary
+      [](sf::Vector2i vec) -> sf::FloatRect {
+        auto [px, py] = sf::Vector2f(vec);
+        px /= 20.F;
+        py /= 20.F;
+        return {
+          {       px,        py},
+          {px * 19.F, py * 19.F}
+        };
+      }(sf::Vector2i(this->window_.getSize())),
+      // Player
       this->player_,
+      // Frame count
+      this->frame_count,
+      // Enemy Positions
       {}
     )
   {
@@ -45,6 +57,8 @@ namespace kalika
     );
     this->window_.setKeyRepeatEnabled(false);
     this->log_text_.setCharacterSize(dimensions.y / 50U);
+
+    // World context
 
     // Anti-aliasing
     this->settings.antiAliasingLevel = 8;
@@ -60,6 +74,16 @@ namespace kalika
   // Run the SFMLApp
   void SFMLApp::run()
   {
+    this->enemy_pool_.get({
+      .behaviour = get_behaviour<Dasher>(),
+      .texture = enemy_texture(),
+      .position = {500.F, 500.F},
+      .velocity = {300.F, 100.F},
+      .animate = true,
+      .frame_count = 2UL,
+      .interval = 30UL
+    });
+
     // Window loop
     float last_stamp = 0.0F;
     while (this->window_.isOpen()) {
@@ -83,11 +107,17 @@ namespace kalika
       for (auto& obj : this->bullet_pool_) {
         obj.update(this->wld_ctx, dt);
       }
+      for (auto& obj : this->enemy_pool_) {
+        obj.update(this->wld_ctx, dt);
+      }
 
       // Draw objects
       this->window_.draw(this->player_.body);
       this->window_.draw(this->player_.reticle);
       for (auto const& obj : this->bullet_pool_) {
+        this->window_.draw(obj.sprite);
+      }
+      for (auto const& obj : this->enemy_pool_) {
         this->window_.draw(obj.sprite);
       }
 
@@ -122,7 +152,11 @@ namespace kalika
       {static_cast<float>(x_disp), static_cast<float>(h - (y_disp * 2))}
     );
     this->log_text_.setString(
-      std::format("Bullet Count: {}", this->bullet_pool_.capacity())
+      std::format(
+        "Bullet Count: {}\n\nEnemy Count: {}",
+        this->bullet_pool_.capacity(),
+        this->enemy_pool_.capacity()
+      )
     );
     this->window_.draw(this->log_text_);
   }

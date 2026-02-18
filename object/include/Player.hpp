@@ -37,6 +37,9 @@ namespace kalika
     }
   }  //namespace internal
 
+  constexpr float bul_size = 16.F;
+  constexpr float pl_size = 72.F;
+
   // Player Info
   struct PlayerInfo {
     sf::Vector2f position;

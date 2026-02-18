@@ -1,5 +1,6 @@
 #include "Player.hpp"
 
+#include "helpers.hpp"
 #include <iostream>
 #include <vector>
 
@@ -10,21 +11,21 @@ namespace kalika
     sf::Texture& body_texture()
     {
       static sf::Texture t;
-      (void)t.loadFromFile("resources/player.png");
+      load_texture(t, "resources/player.png");
       return t;
     }
 
     sf::Texture& reticle_texture()
     {
       static sf::Texture t;
-      (void)t.loadFromFile("resources/reticle.png");
+      load_texture(t, "resources/reticle.png");
       return t;
     }
 
     sf::Texture& bullet_texture()
     {
       static sf::Texture t;
-      (void)t.loadFromFile("resources/bullet.png");
+      load_texture(t, "resources/bullet.png");
       return t;
     }
   }  // namespace internal
@@ -35,11 +36,13 @@ namespace kalika
     body(internal::body_texture()), reticle(internal::reticle_texture())
   {
     // Load sprites
-    auto const tex_size = this->body.getTexture().getSize();
-    this->body.setOrigin(sf::Vector2<float>(tex_size / 2U));
-    this->reticle.setOrigin(
-      sf::Vector2<float>(this->reticle.getTexture().getSize() / 2U)
-    );
+    auto [px, py] = sf::Vector2f(this->body.getTexture().getSize());
+    float const s = pl_size / py;
+    auto m_start = sf::Vector2<int>(0, 0);
+    auto m_end = sf::Vector2<int>(sf::Vector2f(px, py));
+    this->body.setTextureRect({m_start, m_end});
+    this->body.setOrigin(sf::Vector2f((m_start + m_end) / 2));
+    this->body.scale({s, s});
 
     // Set movement options
     this->body.setPosition(info.position);
@@ -54,7 +57,6 @@ namespace kalika
     this->shoot.cur_offset = this->shoot.radius * this->mov.up;
 
     // Size and colour
-    this->body.scale({2.0F, 2.0F});
     this->reticle.scale({3.0F, 3.0F});
     this->reticle.setColor(sf::Color::Cyan);
 
@@ -174,7 +176,8 @@ namespace kalika
 
       for (auto idx = 0UL; idx < RapidFire::count; idx++) {
         infos.emplace_back(
-          get_behaviour<Straight>(),
+          get_behaviour<Dasher>(),
+          bul_size,
           internal::bullet_texture(),
           pos[idx],
           this->velocity * p.forward(),
@@ -220,7 +223,8 @@ namespace kalika
       for (auto idx = 0UL; idx < SpreadFire::count; idx++) {
         auto const new_vel = this->velocity * dir[idx];
         infos.emplace_back(
-          get_behaviour<Straight>(),
+          get_behaviour<Dasher>(),
+          bul_size,
           internal::bullet_texture(),
           pos[idx],
           new_vel,
@@ -248,6 +252,7 @@ namespace kalika
 
       infos.emplace_back(
         get_behaviour<Chaser>(),
+        bul_size,
         internal::bullet_texture(),
         p.position() + p.forward().rotatedBy(angle) * px,
         new_vel,
