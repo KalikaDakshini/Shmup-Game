@@ -5,15 +5,15 @@ A simple C++ twin stick shooter game.
 ## TODO
 
 - [x] Implement Object Pooling
-- [ ] Split rendering and window?
-- [ ] Basic enemy type
+- [-] Split rendering and window?
+- [x] Basic enemy type
+- [ ] Event Handler
+- [ ] AI system
 - [ ] Collisions
 - [x] Three firing modes
   - [x] Spread (pre-compute angles)
   - [x] Homing
   - [ ] Cluster
-- [ ] Dash functionality
-- [ ] Concentrated fire
 - [ ] Views for dynamic camera
 - [ ] Three more enemies
   - [ ] Swarm
@@ -21,3 +21,4 @@ A simple C++ twin stick shooter game.
   - [ ] Split
 - [ ] Arena
 - [ ] Scoring system
+- [ ] Dash functionality

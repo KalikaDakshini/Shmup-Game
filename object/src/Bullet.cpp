@@ -13,7 +13,7 @@ namespace kalika
   void Bullet::set_alive(WorldContext const& ctx)
   {
     bool const area_check =
-      ctx.world_size.contains(this->sprite.getPosition());
+      ctx.world_size.contains(this->sprite().getPosition());
     bool const time_check = this->lifetime_ > 0;
 
     this->alive_ = (area_check && time_check);

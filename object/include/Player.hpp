@@ -11,13 +11,12 @@
 #include <SFML/System.hpp>
 #include <memory>
 
-#include "ObjBase.hpp"
 #include "helpers.hpp"
 
 namespace kalika
 {
   // Forward declarations
-  struct Player;
+  struct ObjInfo;
 
   namespace internal
   {
@@ -58,9 +57,12 @@ namespace kalika
      * @brief Reticle information
      */
     struct Reticle {
+      sf::Sprite reticle;
       sf::Vector2f strength;
       float resp;
       float radius;
+
+      Reticle(sf::Texture& texture) : reticle(texture) {}
 
       // State variables
       bool active_ = false;
@@ -76,22 +78,32 @@ namespace kalika
         return (this->elapsed > 0.0F);
       }
 
+      sf::Sprite& sprite() { return this->reticle; }
+
       void reset_timer() { this->elapsed = this->duration; }
     };
 
-    sf::Sprite body;
-    sf::Sprite reticle;
     Reticle shoot;
     internal::Movable mov;
     // Constructor
     Player(PlayerInfo info);
 
     /**
+     * @brief Return the sprite associated with the body
+     */
+    sf::Sprite const& body() const { return this->mov.sprite; }
+
+    /**
+     * @brief Return a modifiable sprite associated with the body
+     */
+    sf::Sprite& body() { return this->mov.sprite; }
+
+    /**
      * @brief Return the forward direction
      */
     sf::Vector2f const position() const
     {
-      return this->body.getPosition();
+      return this->body().getPosition();
     }
 
     /**
@@ -116,6 +128,11 @@ namespace kalika
      * @brief Move and orient the ship in the corresponding direction
      */
     void move(WorldContext const& ctx, float dt);
+
+    /**
+     * @brief Return the movable struct
+     */
+    internal::Movable const& movable() const { return this->mov; }
 
     /**
      * @brief Set the firing  mode

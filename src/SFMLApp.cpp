@@ -31,15 +31,8 @@ namespace kalika
       // Clock
       this->clock_,
       // World Boundary
-      [](sf::Vector2i vec) -> sf::FloatRect {
-        auto [px, py] = sf::Vector2f(vec);
-        px /= 20.F;
-        py /= 20.F;
-        return {
-          {       px,        py},
-          {px * 19.F, py * 19.F}
-        };
-      }(sf::Vector2i(this->window_.getSize())),
+      {sf::Vector2f(this->window_.getSize()) * 0.05F,
+       sf::Vector2f(this->window_.getSize()) * 0.95F},
       // Player
       this->player_,
       // Frame count
@@ -74,15 +67,12 @@ namespace kalika
   // Run the SFMLApp
   void SFMLApp::run()
   {
-    this->enemy_pool_.get({
-      .behaviour = get_behaviour<Dasher>(),
-      .texture = enemy_texture(),
-      .position = {500.F, 500.F},
-      .velocity = {300.F, 100.F},
-      .animate = true,
-      .frame_count = 2UL,
-      .interval = 30UL
-    });
+    this->enemy_pool_.get(
+      Enemy::create<Dasher>({500.F, 500.F}, {1.F, 1.F})
+    );
+    this->enemy_pool_.get(
+      Enemy::create<Chaser>({400.F, 500.F}, {0.F, -1.F})
+    );
 
     // Window loop
     float last_stamp = 0.0F;
@@ -112,13 +102,13 @@ namespace kalika
       }
 
       // Draw objects
-      this->window_.draw(this->player_.body);
-      this->window_.draw(this->player_.reticle);
+      this->window_.draw(this->player_.body());
+      this->window_.draw(this->player_.shoot.reticle);
       for (auto const& obj : this->bullet_pool_) {
-        this->window_.draw(obj.sprite);
+        this->window_.draw(obj.sprite());
       }
       for (auto const& obj : this->enemy_pool_) {
-        this->window_.draw(obj.sprite);
+        this->window_.draw(obj.sprite());
       }
 
       // Clear pool

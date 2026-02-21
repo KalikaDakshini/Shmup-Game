@@ -6,9 +6,6 @@
 
 namespace kalika
 {
-  // Texture Cache
-  sf::Texture& enemy_texture();
-
   /**
    * @brief Class representing an enemy object
    */
@@ -29,6 +26,30 @@ namespace kalika
      * @brief Update the object by one frame
      */
     void update(WorldContext const& ctx, float dt);
+
+    /**
+     * @brief Return the texture associated with the enemy
+     */
+    template<typename EnemyType> static sf::Texture& texture()
+    {
+      static sf::Texture tex;
+      load_texture(tex, EnemyType::tex_path);
+      return tex;
+    }
+
+    template<typename Type>
+    static ObjInfo create(sf::Vector2f pos, sf::Vector2f vel_dir)
+    {
+      return {
+        .behaviour = get_behaviour<Type>(),
+        .texture = Enemy::texture<Type>(),
+        .position = pos,
+        .velocity = vel_dir.normalized() * Type::abs_vel,
+        .animate = true,
+        .frame_count = Type::frame_count,
+        .interval = Type::interval,
+      };
+    }
 
   private:
     float health_;

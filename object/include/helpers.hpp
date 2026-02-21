@@ -1,6 +1,7 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 #include <cmath>
 #include <cstddef>
@@ -10,6 +11,52 @@
 namespace kalika
 {
   using std::size_t;
+
+  namespace internal
+  {
+    /**
+     * @brief Movement information of the object
+     */
+    struct Movable {
+      // Orientation
+      sf::Vector2f up = sf::Vector2f({0.0F, -1.0F});
+      sf::Vector2f right = sf::Vector2f({1.0F, 0.0F});
+
+      // Movement
+      float vel_scale;
+      sf::Vector2f vel_dir;
+      sf::Vector2f strength;
+
+      // Player data
+      sf::Sprite sprite;
+
+      Movable(sf::Texture& texture) : sprite(texture) {}
+
+      /**
+       * @brief Return the position of the object
+       */
+      sf::Vector2f position() const { return this->sprite.getPosition(); }
+
+      /**
+       * @brief Return the velocity of the object
+       */
+      sf::Vector2f velocity() const { return this->vel_dir * vel_scale; }
+
+      // Note: Do not use for player
+      void setVelocity(sf::Vector2f velocity)
+      {
+        if (velocity.lengthSquared() == 0) {
+          this->vel_scale = 0;
+          this->vel_dir = {};
+          return;
+        }
+        this->vel_scale = velocity.length();
+        this->vel_dir = velocity.normalized();
+        this->up = this->vel_dir;
+      }
+    };
+
+  }  //namespace internal
 
   // Forward declarations
   struct Player;
@@ -36,41 +83,11 @@ namespace kalika
     size_t& frame_count;
     std::vector<sf::Vector2f> enemy_pos;
 
+    /**
+     * @brief Return time elapsed
+     */
     float cur_time() const { return timer.getElapsedTime().asSeconds(); }
   };
-
-  namespace internal
-  {
-    /**
-     * @brief Movement information of the object
-     */
-    struct Movable {
-      // Orientation
-      sf::Vector2f up = sf::Vector2f({0.0F, -1.0F});
-      sf::Vector2f right = sf::Vector2f({1.0F, 0.0F});
-
-      // Movement
-      float vel_scale;
-      sf::Vector2f vel_dir;
-      sf::Vector2f strength;
-
-      sf::Vector2f velocity() const { return this->vel_dir * vel_scale; }
-
-      // Note: Do not use for player
-      void setVelocity(sf::Vector2f velocity)
-      {
-        if (velocity.lengthSquared() == 0) {
-          this->vel_scale = 0;
-          this->vel_dir = {};
-          return;
-        }
-        this->vel_scale = velocity.length();
-        this->vel_dir = velocity.normalized();
-        this->up = this->vel_dir;
-      }
-    };
-
-  }  //namespace internal
 }  //namespace kalika
 
 #endif

@@ -1,8 +1,10 @@
-#include "Player.hpp"
-
-#include "helpers.hpp"
 #include <iostream>
 #include <vector>
+
+#include "Behaviour.hpp"
+#include "ObjBase.hpp"
+#include "Player.hpp"
+#include "helpers.hpp"
 
 namespace kalika
 {
@@ -33,19 +35,19 @@ namespace kalika
   // ====== Player Functions ====== //
   // Constructor
   Player::Player(PlayerInfo info) :
-    body(internal::body_texture()), reticle(internal::reticle_texture())
+    mov(internal::body_texture()), shoot(internal::reticle_texture())
   {
     // Load sprites
-    auto [px, py] = sf::Vector2f(this->body.getTexture().getSize());
+    auto [px, py] = sf::Vector2f(this->body().getTexture().getSize());
     float const s = pl_size / py;
     auto m_start = sf::Vector2<int>(0, 0);
     auto m_end = sf::Vector2<int>(sf::Vector2f(px, py));
-    this->body.setTextureRect({m_start, m_end});
-    this->body.setOrigin(sf::Vector2f((m_start + m_end) / 2));
-    this->body.scale({s, s});
+    this->body().setTextureRect({m_start, m_end});
+    this->body().setOrigin(sf::Vector2f((m_start + m_end) / 2));
+    this->body().scale({s, s});
 
     // Set movement options
-    this->body.setPosition(info.position);
+    this->body().setPosition(info.position);
     this->mov.up = info.dir.normalized();
     this->mov.right = info.dir.perpendicular().normalized();
     this->mov.vel_dir = info.vel_dir;
@@ -57,8 +59,8 @@ namespace kalika
     this->shoot.cur_offset = this->shoot.radius * this->mov.up;
 
     // Size and colour
-    this->reticle.scale({3.0F, 3.0F});
-    this->reticle.setColor(sf::Color::Cyan);
+    this->shoot.sprite().scale({3.0F, 3.0F});
+    this->shoot.sprite().setColor(sf::Color::Cyan);
 
     // Set default fire mode
     this->set_mode<RapidFire>();
@@ -72,6 +74,7 @@ namespace kalika
     this->update_reticle(dt);
   }
 
+  // Update body status
   void Player::update_body(WorldContext const& ctx, float dt)
   {
     // Rotate the frame
@@ -94,8 +97,10 @@ namespace kalika
     auto disp = this->mov.velocity() * dt;
     this->bind(ctx.world_size, disp);
     // Move the ship
-    this->body.move(disp);
-    this->body.setRotation(this->mov.up.angle() + sf::radians(M_PIf / 2));
+    this->body().move(disp);
+    this->body().setRotation(
+      this->mov.up.angle() + sf::radians(M_PIf / 2)
+    );
   }
 
   void Player::update_reticle(float dt)
@@ -117,12 +122,12 @@ namespace kalika
       (target_offset - this->shoot.cur_offset) * this->shoot.resp * dt;
 
     // Set reticle's position
-    this->reticle.setPosition(
-      this->body.getPosition() + this->shoot.cur_offset
+    this->shoot.sprite().setPosition(
+      this->body().getPosition() + this->shoot.cur_offset
     );
 
     // Set active state of the reticle
-    this->reticle.setColor(sf::Color::Transparent);
+    this->shoot.sprite().setColor(sf::Color::Transparent);
     if ((this->shoot.strength.lengthSquared() > 0.F)) {
       this->is_active() = true;
     }
@@ -137,13 +142,13 @@ namespace kalika
 
     // Set reticle display on
     if (this->is_active()) {
-      this->reticle.setColor(sf::Color::Cyan);
+      this->shoot.sprite().setColor(sf::Color::Cyan);
     }
   }
 
   void Player::bind(sf::FloatRect bounds, sf::Vector2f& disp)
   {
-    auto new_pos = this->body.getPosition() + disp;
+    auto new_pos = this->body().getPosition() + disp;
     if (!bounds.contains(new_pos)) {
       disp = {};
     }
@@ -166,7 +171,7 @@ namespace kalika
       this->spawn = false;
       // 1. Set positions of bullets
       // Assume texture is a square
-      auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
+      auto [px, _] = sf::Vector2f(p.body().getTexture().getSize());
 
       auto const start_pos = p.position();
       std::array<sf::Vector2f, RapidFire::count> const pos = {
@@ -199,7 +204,7 @@ namespace kalika
       this->spawn = false;
       // 1. Set positions of bullets
       // Assume texture is a square
-      auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
+      auto [px, _] = sf::Vector2f(p.body().getTexture().getSize());
 
       // Set directions
       std::array<sf::Vector2f, SpreadFire::count> const dir = {
@@ -212,11 +217,11 @@ namespace kalika
 
       // Set positions
       std::array<sf::Vector2f, SpreadFire::count> const pos = {
-        p.body.getPosition() + (dir[0]) * px,
-        p.body.getPosition() + (dir[1]) * px,
-        p.body.getPosition() + (dir[2]) * px,
-        p.body.getPosition() + (dir[3]) * px,
-        p.body.getPosition() + (dir[4]) * px / 2.F
+        p.body().getPosition() + (dir[0]) * px,
+        p.body().getPosition() + (dir[1]) * px,
+        p.body().getPosition() + (dir[2]) * px,
+        p.body().getPosition() + (dir[3]) * px,
+        p.body().getPosition() + (dir[4]) * px / 2.F
       };
 
       // 2. Generate info and add bullets
@@ -244,7 +249,7 @@ namespace kalika
     // Spawn bullets if offset has passed
     if (this->spawn_check(dt)) {
       // 1. Set positions of bullets
-      auto [px, _] = sf::Vector2f(p.body.getTexture().getSize());
+      auto [px, _] = sf::Vector2f(p.body().getTexture().getSize());
 
       // 2. Generate info and add bullets
       auto const new_vel = this->velocity * p.forward();
