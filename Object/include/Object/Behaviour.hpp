@@ -6,7 +6,7 @@
 #include <string_view>
 #include <variant>
 
-#include "helpers.hpp"
+#include <Object/helpers.hpp>
 
 namespace kalika
 {
@@ -16,18 +16,7 @@ namespace kalika
     /**
      * @brief Movement mode of an object
      */
-    template<typename Derived> struct Behaviour {
-      /**
-       * @brief Return acceleration of the Object
-       */
-      [[nodiscard]] sf::Vector2f accel(
-        internal::Movable const& self, internal::Movable const& target
-      ) const
-      {
-        auto& mode = static_cast<Derived&>(*this);
-        return mode.accel(self, target);
-      }
-
+    struct BehaviourBase {
       /**
        * @brief Check if the object is hitting the bounds.
        */
@@ -69,16 +58,14 @@ namespace kalika
         return false;
       }
 
-    private:
-      Behaviour() = default;
-      friend Derived;
+      BehaviourBase() = default;
     };
   }  //namespace internal
 
   /**
    * @brief Straight path
    */
-  struct Dasher : internal::Behaviour<Dasher> {
+  struct Dasher : internal::BehaviourBase {
     inline static constexpr std::string_view tex_path =
       "./resources/Enemies/Dasher.png";
 
@@ -89,12 +76,9 @@ namespace kalika
     /**
      * @brief Return the acceleration of the chaser object
      */
-    [[nodiscard]] sf::Vector2f accel(
-      internal::Movable const& self, internal::Movable const& target
-    ) const
+    [[nodiscard]] sf::Vector2f
+    accel(internal::Movable const&, internal::Movable const&) const
     {
-      (void)self;
-      (void)target;
       return {};
     }
 
@@ -122,7 +106,7 @@ namespace kalika
   /**
    * @brief Hunts down the nearest enemy
    */
-  struct Chaser : internal::Behaviour<Chaser> {
+  struct Chaser : public internal::BehaviourBase {
     inline static constexpr std::string_view tex_path =
       "./resources/Enemies/Chaser.png";
 
@@ -138,7 +122,7 @@ namespace kalika
       internal::Movable const& self, internal::Movable const& target
     ) const
     {
-      auto const dist_vec = target.position() - self.position();
+      auto const dist_vec = target.pos - self.pos;
       auto const dist_length = dist_vec.length();
       auto const dot_prod = dist_vec.dot(self.up);
       auto const angle_update = homing_factor *
@@ -147,7 +131,7 @@ namespace kalika
 
       // Update the bullet's velocity & position
       auto const dir = (dist_vec.dot(self.right) > 0) ? 1.F : -1.F;
-      return dir * self.velocity().perpendicular() * angle_update;
+      return dir * self.vel.perpendicular() * angle_update;
     }
 
     /**
@@ -172,11 +156,11 @@ namespace kalika
   /**
    * @brief Chases towards the target
    */
-  using BehaviourVariant = std::variant<Dasher, Chaser>;
+  using Behaviour = std::variant<Dasher, Chaser>;
 
-  template<typename VariantMode> BehaviourVariant get_behaviour()
+  template<typename VariantMode> Behaviour get_behaviour()
   {
-    static BehaviourVariant variant{VariantMode()};
+    static Behaviour variant{VariantMode()};
     return variant;
   }
 

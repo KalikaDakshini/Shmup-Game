@@ -11,13 +11,22 @@
 #include <SFML/Main.hpp>
 #include <SFML/System.hpp>
 
-#include "Bullet.hpp"
-#include "Enemy.hpp"
-#include "Object.hpp"
-#include "Player.hpp"
+#include <Event/GameEvent.hpp>
+#include <Object/Player.hpp>
+#include <Object/Pool.hpp>
 
 namespace kalika
 {
+  namespace internal
+  {
+    // Texture Cache
+    sf::Texture& body_texture();
+
+    sf::Texture& reticle_texture();
+
+    sf::Texture& bullet_texture();
+  }  // namespace internal
+
   /**
    * @brief Application class
    */
@@ -49,10 +58,17 @@ namespace kalika
     // World info
     sf::Vector2f up;
 
+    // Game Event Handler
+    EventBus bus_;
+
+    // Remember stick positions
+    sf::Vector2f l_strength;
+    sf::Vector2f r_strength;
+
     // Objects
     Player player_;
-    ObjectPool<Bullet> bullet_pool_;
-    ObjectPool<Enemy> enemy_pool_;
+    // Pool<Enemy> enemies_;
+    // Pool<Bullet> bullets_;
 
     // Context objects
     WorldContext wld_ctx;
@@ -62,11 +78,12 @@ namespace kalika
     void log();
     // Update logs
     void update_log(std::string const& text);
+    // Update context
+    void update_ctx();
 
     // Clamp deadzone
     template<typename T>
-    void
-    deadzone(sf::Vector2<T>& in, sf::Vector2<T> out, float zone = 20.F);
+    sf::Vector2<T> deadzone(sf::Vector2<T> strength, float zone = 20.F);
 
     // Handling JoystickHeld event
     void fire_check();

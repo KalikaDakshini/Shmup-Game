@@ -2,6 +2,7 @@
 #define ENEMY_H
 
 #include "ObjBase.hpp"
+#include "Player.hpp"
 #include "helpers.hpp"
 
 namespace kalika
@@ -11,7 +12,7 @@ namespace kalika
    */
   struct Enemy : internal::ObjBase<Enemy> {
     // Create an enemy
-    static Enemy create(ObjInfo info) { return {info}; }
+    static Enemy create(ObjInfo const& info) { return info; }
 
     /**
      * @brief Check if object is alive
@@ -37,8 +38,9 @@ namespace kalika
       return tex;
     }
 
+    // For debugging purposes only
     template<typename Type>
-    static ObjInfo create(sf::Vector2f pos, sf::Vector2f vel_dir)
+    static ObjInfo spawn(sf::Vector2f pos, sf::Vector2f vel_dir)
     {
       return {
         .behaviour = get_behaviour<Type>(),

@@ -6,7 +6,7 @@ A simple C++ twin stick shooter game.
 
 - [x] Implement Object Pooling
 - [-] Split rendering and window?
-- [x] Basic enemy type
+- [x] Basic enemy type (Dasher)
 - [ ] Event Handler
 - [ ] AI system
 - [ ] Collisions
@@ -17,8 +17,8 @@ A simple C++ twin stick shooter game.
 - [ ] Views for dynamic camera
 - [ ] Three more enemies
   - [ ] Swarm
-  - [ ] Chaser
+  - [x] Chaser
   - [ ] Split
 - [ ] Arena
 - [ ] Scoring system
-- [ ] Dash functionality
+- [ ] Dash functionality?

@@ -1,8 +1,8 @@
-#include "SFMLApp.hpp"
-
 #include <algorithm>
 #include <iostream>
 #include <random>
+
+#include <SFMLApp.hpp>
 
 namespace kalika
 {
@@ -18,14 +18,21 @@ namespace kalika
     up({0.F, -1.F}),
     // Player Information
     player_(
-      Player::create({
+      {
+        // Phase
         .position = sf::Vector2<float>(dimensions / 2U),
-        .vel_dir = {},
-        .vel_scale = static_cast<float>(dimensions.x) / 5.F,
+        .velocity = sf::Vector2f(sf::Vector2u(dimensions.x / 5, 0U)),
+        .dir = up,
+        // Textures
+        .player_tex = internal::body_texture(),
+        .reticle_tex = internal::reticle_texture(),
+        // Size
+        .size = 72.F,
+        // Reticle information
         .radius = static_cast<float>(dimensions.y) / 4.F,
         .responsiveness = 4.F,
-        .dir = up,
-      })
+      },
+      &(this->bus_)
     ),
     wld_ctx(
       // Clock
@@ -36,9 +43,7 @@ namespace kalika
       // Player
       this->player_,
       // Frame count
-      this->frame_count,
-      // Enemy Positions
-      {}
+      this->frame_count
     )
   {
     // Window configuration
@@ -50,8 +55,6 @@ namespace kalika
     );
     this->window_.setKeyRepeatEnabled(false);
     this->log_text_.setCharacterSize(dimensions.y / 50U);
-
-    // World context
 
     // Anti-aliasing
     this->settings.antiAliasingLevel = 8;
@@ -67,13 +70,6 @@ namespace kalika
   // Run the SFMLApp
   void SFMLApp::run()
   {
-    this->enemy_pool_.get(
-      Enemy::create<Dasher>({500.F, 500.F}, {1.F, 1.F})
-    );
-    this->enemy_pool_.get(
-      Enemy::create<Chaser>({400.F, 500.F}, {0.F, -1.F})
-    );
-
     // Window loop
     float last_stamp = 0.0F;
     while (this->window_.isOpen()) {
@@ -89,33 +85,19 @@ namespace kalika
       this->window_.handleEvents([this](auto const& event) {
         this->handle(event);
       });
-      this->fire_check();
 
-      // Move the objects
-      // Custom event
-      this->player_.move(wld_ctx, dt);
-      for (auto& obj : this->bullet_pool_) {
-        obj.update(this->wld_ctx, dt);
-      }
-      for (auto& obj : this->enemy_pool_) {
-        obj.update(this->wld_ctx, dt);
-      }
+      // Update objects
+      this->player_.update(this->wld_ctx, this->dt);
 
       // Draw objects
-      this->window_.draw(this->player_.body());
-      this->window_.draw(this->player_.shoot.reticle);
-      for (auto const& obj : this->bullet_pool_) {
-        this->window_.draw(obj.sprite());
-      }
-      for (auto const& obj : this->enemy_pool_) {
-        this->window_.draw(obj.sprite());
-      }
-
-      // Clear pool
-      this->bullet_pool_.release();
+      this->window_.draw(this->player_.sprite());
+      this->window_.draw(this->player_.reticle_sprite());
 
       // Log messages to window
       this->log();
+
+      // Update context
+      this->update_ctx();
 
       // Render window
       this->window_.display();
@@ -141,13 +123,13 @@ namespace kalika
     this->log_text_.setPosition(
       {static_cast<float>(x_disp), static_cast<float>(h - (y_disp * 2))}
     );
-    this->log_text_.setString(
-      std::format(
-        "Bullet Count: {}\n\nEnemy Count: {}",
-        this->bullet_pool_.capacity(),
-        this->enemy_pool_.capacity()
-      )
-    );
+    // this->log_text_.setString(
+    //   std::format(
+    //     "Bullet Count: {}\n\nEnemy Count: {}",
+    //     this->bullet_pool_.capacity(),
+    //     this->enemy_pool_.capacity()
+    //   )
+    // );
     this->window_.draw(this->log_text_);
   }
 
@@ -162,15 +144,18 @@ namespace kalika
     this->logs_.emplace_back(text);
   }
 
-  void SFMLApp::fire_check()
-  {
-    if (this->player_.shoot.strength.lengthSquared() > 0) {
-      std::ranges::for_each(
-        this->player_.fire(this->wld_ctx, dt),
-        [this](auto& info) { this->bullet_pool_.get(info); }
-      );
-    }
-  }
+  // void SFMLApp::fire_check()
+  // {
+  //   if (this->player_.shoot.strength.lengthSquared() > 0) {
+  //     std::ranges::for_each(
+  //       this->player_.fire(this->wld_ctx, dt),
+  //       [this](auto& info) { this->bullet_pool_.get(info); }
+  //     );
+  //   }
+  // }
+
+  void SFMLApp::update_ctx()
+  {}
 
   // Handle closing events
   void SFMLApp::handle(sf::Event::Closed const&)
@@ -189,62 +174,60 @@ namespace kalika
   void SFMLApp::handle(sf::Event::JoystickButtonPressed const& event)
   {
     this->update_log(std::format("Pressed Button: {}", event.button));
-    // Set fire modes
-    if (sf::Joystick::isButtonPressed(0, 1)) {
-      this->player_.set_mode<ChaserFire>();
-    }
-    if (sf::Joystick::isButtonPressed(0, 2)) {
-      this->player_.set_mode<SpreadFire>();
-    }
-    if (sf::Joystick::isButtonPressed(0, 3)) {
-      this->player_.set_mode<RapidFire>();
-    }
+    // // Set fire modes
+    // if (sf::Joystick::isButtonPressed(0, 1)) {
+    //   this->player_.set_mode<ChaserFire>();
+    // }
+    // if (sf::Joystick::isButtonPressed(0, 2)) {
+    //   this->player_.set_mode<SpreadFire>();
+    // }
+    // if (sf::Joystick::isButtonPressed(0, 3)) {
+    //   this->player_.set_mode<RapidFire>();
+    // }
   }
 
   template<typename T>
-  void
-  SFMLApp::deadzone(sf::Vector2<T>& in, sf::Vector2<T> out, float zone)
+  sf::Vector2<T> SFMLApp::deadzone(sf::Vector2<T> strength, float zone)
   {
-    if (out.lengthSquared() >= zone * zone) {
-      in.x = out.x;
-      in.y = out.y;
+    if (strength.lengthSquared() >= zone * zone) {
+      return strength;
     }
-    else {
-      in.x = 0;
-      in.y = 0;
-    }
+    return {};
   }
 
   void SFMLApp::handle(sf::Event::JoystickMoved const& event)
   {
-    // Control movement
-    float const pos = event.position;
+    // Control movement direction
+    float const stick_pos = event.position;
     if (event.axis == sf::Joystick::Axis::X) {
-      this->deadzone(
-        this->player_.mov.strength, {pos, this->player_.mov.strength.y}
-      );
+      this->l_strength =
+        this->deadzone<float>({stick_pos, this->l_strength.y});
     }
     if (event.axis == sf::Joystick::Axis::Y) {
-      this->deadzone(
-        this->player_.mov.strength, {this->player_.mov.strength.x, pos}
-      );
+      this->l_strength =
+        this->deadzone<float>({this->l_strength.x, stick_pos});
     }
-    // Control direction
+    // Control aiming direction
     if (event.axis == sf::Joystick::Axis::U) {
-      this->deadzone(
-        this->player_.shoot.strength, {pos, this->player_.shoot.strength.y}
-      );
+      this->r_strength =
+        this->deadzone<float>({stick_pos, this->r_strength.y});
     }
     if (event.axis == sf::Joystick::Axis::V) {
-      this->deadzone(
-        this->player_.shoot.strength, {this->player_.shoot.strength.x, pos}
-      );
+      this->r_strength =
+        this->deadzone<float>({this->r_strength.x, stick_pos});
     }
-    // auto print_vec = [](auto const& id, auto const& vec) {
-    //   return std::format("{}: {}, {}\n", id, vec.x, vec.y);
-    // };
-    // this->update_log(print_vec("L", this->player_.shoot.strength));
-    // this->update_log(print_vec("R", this->player_.mov.strength));
+
+    // Set player and reticle strengths
+    this->player_.strength = this->l_strength;
+    this->player_.shoot.strength = this->r_strength;
+
+    // Show stick positions
+    auto print_vec = [](auto const& id, auto const& vec) {
+      return std::format("{}: {}, {}\n", id, vec.x, vec.y);
+    };
+
+    this->update_log(print_vec("L", this->l_strength));
+    this->update_log(print_vec("R", this->r_strength));
   }
 
   // All remaining events
@@ -252,5 +235,29 @@ namespace kalika
   {
     // this->update_log("Unhandled Event\n");
   }
+
+  namespace internal
+  {
+    sf::Texture& body_texture()
+    {
+      static sf::Texture t;
+      load_texture(t, "resources/player.png");
+      return t;
+    }
+
+    sf::Texture& reticle_texture()
+    {
+      static sf::Texture t;
+      load_texture(t, "resources/reticle.png");
+      return t;
+    }
+
+    sf::Texture& bullet_texture()
+    {
+      static sf::Texture t;
+      load_texture(t, "resources/Bullet.png");
+      return t;
+    }
+  }  // namespace internal
 
 }  //namespace kalika

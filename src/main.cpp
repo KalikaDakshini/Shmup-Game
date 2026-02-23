@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "SFMLApp.hpp"
+#include <SFMLApp.hpp>
 
 int main()
 {

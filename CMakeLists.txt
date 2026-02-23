@@ -12,6 +12,8 @@ target_sources(${MAIN_TARGET}
 	PRIVATE src/main.cpp src/SFMLApp.cpp
 	PUBLIC
 	FILE_SET HEADERS
+	FILES
+	include/SFMLApp.hpp
 )
 
 target_include_directories(${MAIN_TARGET} PUBLIC include/)
@@ -49,10 +51,14 @@ set_target_properties(${MAIN_TARGET} PROPERTIES
 # Testing
 option(BUILD_TESTING "Enable testing and build tests" ON)
 
-# Link libraries
+# Link SFML libraries
 find_package(SFML 3 REQUIRED Graphics System Window)
 target_link_libraries(${MAIN_TARGET} PRIVATE SFML::Graphics)
 
 # Link library object
-add_subdirectory(object)
-target_link_libraries(${MAIN_TARGET} PRIVATE object)
+add_subdirectory(Object)
+target_link_libraries(${MAIN_TARGET} PRIVATE Object)
+
+# Link library Event
+add_subdirectory(Event)
+target_link_libraries(${MAIN_TARGET} PRIVATE Event)

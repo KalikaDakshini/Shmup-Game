@@ -1,4 +1,4 @@
-#include "Enemy.hpp"
+#include <Object/Enemy.hpp>
 
 namespace kalika
 {
@@ -7,7 +7,7 @@ namespace kalika
   {
     auto [px, py] = this->sprite().getPosition();
 
-    this->move(ctx, dt);
+    this->move(ctx, ctx.player.movable(), dt);
     // Flip direction if going out of bounds
     if (this->bound(ctx.world_size)) {
       this->mov.setVelocity(

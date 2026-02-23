@@ -1,4 +1,4 @@
-#include "Bullet.hpp"
+#include <Object/Bullet.hpp>
 
 namespace kalika
 {
@@ -6,7 +6,8 @@ namespace kalika
   void Bullet::update(WorldContext const& ctx, float dt)
   {
     this->lifetime_ -= dt;
-    this->move(ctx, dt);
+    auto const& target = this->find_closest(ctx);
+    this->move(ctx, target, dt);
   }
 
   // Check if the bullet is alive

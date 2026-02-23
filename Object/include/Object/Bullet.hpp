@@ -3,12 +3,11 @@
 
 #include <type_traits>
 
-#include "ObjBase.hpp"
-#include "helpers.hpp"
+#include <Object/ObjBase.hpp>
 
 namespace kalika
 {
-  struct Bullet : internal::ObjBase<Bullet> {
+  struct Bullet : internal::ObjBase {
     // Lifetime of the object
     float lifetime_;
 
@@ -21,15 +20,22 @@ namespace kalika
     void set_alive(WorldContext const& ctx);
 
     // Rebuild an inactive object
-    void rebuild(ObjInfo const& info);
+    void rebuild();
 
-    static Bullet create(ObjInfo const& info) { return info; }
+    // Factory function to create bullets
+    static Bullet create();
 
   private:
     // Constructor
     Bullet(ObjInfo const& info) :
       ObjBase<Bullet>(info), lifetime_(info.lifetime)
     {}
+
+    // // Find the enemy closest to the bullet and retrieve its target
+    // internal::Movable const& find_closest(WorldContext const& ctx)
+    // {
+    //   return ctx.enemies[0].mov;
+    // }
   };
 }  //namespace kalika
 
