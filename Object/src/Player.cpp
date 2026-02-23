@@ -5,6 +5,17 @@
 
 namespace kalika
 {
+
+  namespace internal
+  {
+    sf::Texture& bullet_texture()
+    {
+      static sf::Texture t;
+      load_texture(t, "resources/bullet.png");
+      return t;
+    }
+  }  //namespace internal
+
   // ====== Player Functions ====== //
   // Constructor
   Player::Player(PlayerInfo info, EventBus* bus) :
@@ -30,8 +41,8 @@ namespace kalika
     this->shoot.sprite.scale({3.0F, 3.0F});
     this->shoot.sprite.setColor(sf::Color::Transparent);
 
-    // Disable animations for player
-    this->animate_ = false;
+    // Set default fire mode
+    this->set_mode<RapidFire>();
 
     // Update the frame of the ship
     this->update_frame();

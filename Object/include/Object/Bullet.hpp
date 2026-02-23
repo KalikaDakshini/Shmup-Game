@@ -17,20 +17,34 @@ namespace kalika
     void update(WorldContext const& ctx, float dt);
 
     // Check if the bullet is alive and toggle it
-    void set_alive(WorldContext const& ctx);
+    void check_alive(WorldContext const& ctx);
 
     // Rebuild an inactive object
-    void rebuild();
+    void rebuild(
+      size_t idx,
+      sf::Vector2f position,
+      sf::Vector2f velocity,
+      sf::Texture& tex,
+      float bul_size,
+      float lifetime,
+      Behaviour behaviour,
+      EventBus* bus
+    );
 
-    // Factory function to create bullets
-    static Bullet create();
+    // Constructor
+    Bullet(
+      size_t idx,
+      sf::Vector2f position,
+      sf::Vector2f velocity,
+      sf::Texture& tex,
+      float bul_size,
+      float lifetime,
+      Behaviour behaviour,
+      EventBus* bus
+    );
 
   private:
-    // Constructor
-    Bullet(ObjInfo const& info) :
-      ObjBase<Bullet>(info), lifetime_(info.lifetime)
-    {}
-
+    size_t pool_id_;
     // // Find the enemy closest to the bullet and retrieve its target
     // internal::Movable const& find_closest(WorldContext const& ctx)
     // {

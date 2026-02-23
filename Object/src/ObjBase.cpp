@@ -14,11 +14,7 @@ namespace kalika::internal
     bus_(bus), draw_(sprite_tex)
   {
     // Customize sprite
-    auto size = sf::Vector2f(this->sprite().getTexture().getSize());
-    this->sprite().setTextureRect({{}, sf::Vector2i(size)});
-    this->sprite().setOrigin(size / 2.F);
-    float const s = obj_size / size.y;
-    this->sprite().scale({s, s});
+    this->scale(obj_size);
 
     // Set Phase
     this->mov_.pos = position;
@@ -42,15 +38,16 @@ namespace kalika::internal
 
     // Update kinetic data
     auto accel = std::visit(
-      [&target, this](auto const& var) {
-        return var.accel(this->mov_, target);
+      [&target, this](auto const* var) {
+        return (var != nullptr) ? var->accel(this->mov_, target)
+                                : sf::Vector2f{};
       },
-      *(this->behaviour_)
+      this->behaviour_
     );
-
     this->mov_.pos += this->velocity() * dt;
     this->mov_.vel = this->velocity() + accel * dt;
 
+    // Update co-ordinate frame
     this->update_frame();
   }
 
@@ -63,15 +60,27 @@ namespace kalika::internal
 
     // Move the sprite
     this->draw_.sprite.setPosition(this->position());
-    this->draw_.sprite.setRotation(this->forward().angleTo(AXIS_X) * -1.F);
+    this->draw_.sprite.setRotation(
+      sf::degrees(90.F) + this->forward().angleTo(AXIS_X) * -1.F
+    );
   }
 
   void ObjBase::animate(WorldContext const& ctx)
   {
     // Get the frame number
     auto frame_num = (ctx.frame_count / this->interval_) % frame_count_;
-    auto xs = (frame_num == 0) ? 0UL : fx * frame_num - 1;
+    auto xs = (frame_num == 0) ? 0UL : (fx * frame_num) - 1;
     // Set the sprite to the matching frame
-    this->set_frame(sf::Vector2<int>(xs, 0UL), sf::Vector2<int>(fx, fy));
+    this->set_frame(sf::Vector2u(xs, 0UL), sf::Vector2u(fx, fy));
+  }
+
+  // Scale the texture
+  void ObjBase::scale(float sprite_size)
+  {
+    auto size = sf::Vector2f(this->sprite().getTexture().getSize());
+    this->sprite().setTextureRect({{}, sf::Vector2i(size)});
+    this->sprite().setOrigin(size / 2.F);
+    float const s = sprite_size / size.y;
+    this->sprite().scale({s, s});
   }
 }  //namespace kalika::internal

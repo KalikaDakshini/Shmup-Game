@@ -7,7 +7,6 @@
 #include <variant>
 
 #include <format>
-#include <iostream>
 
 #include <Event/GameEvent.hpp>
 #include <Object/Behaviour.hpp>
@@ -61,6 +60,11 @@ namespace kalika::internal
     sf::Vector2f right() const { return this->mov_.right; }
 
     /**
+     * @brief Scale sprite
+     */
+    void scale(float sprite_size);
+
+    /**
      * @brief Update the kinetic data
      */
     void move(
@@ -73,7 +77,7 @@ namespace kalika::internal
     bool is_alive() const { return this->alive_; }
 
   protected:
-    // Event bus for pushing events
+    // Event bus for pushing eventsscale
     EventBus* bus_;
 
     // Composition variables
@@ -85,12 +89,12 @@ namespace kalika::internal
 
     // Animation variables
     size_t fx, fy;
-    bool animate_ = true;
+    bool animate_ = false;
     unsigned int frame_count_ = 2UL;
     unsigned int interval_ = 10UL;
 
     // Behaviour variable
-    Behaviour* behaviour_;
+    Behaviour behaviour_;
 
     // ====== Helper functions ====== //
     /**

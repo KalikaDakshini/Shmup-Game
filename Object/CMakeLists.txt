@@ -7,6 +7,8 @@ target_sources(Object
 	PRIVATE
 	src/Player.cpp
 	src/ObjBase.cpp
+	src/FireMode.cpp
+	src/Bullet.cpp
 
 	# src/Bullet.cpp
 	# src/Enemy.cpp
@@ -15,10 +17,11 @@ target_sources(Object
 	BASE_DIRS include/
 	FILES
 
-	# include/Object/Behaviour.hpp
-	# include/Object/Bullet.hpp
-	# include/Object/Enemy.hpp
+	include/Object/Bullet.hpp
+	include/Object/Behaviour.hpp
 	include/Object/Player.hpp
+
+	# include/Object/Enemy.hpp
 )
 
 target_include_directories(Object

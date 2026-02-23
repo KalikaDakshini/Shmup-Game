@@ -14,6 +14,7 @@ namespace kalika
   using std::size_t;
 
   inline static sf::Vector2f AXIS_X = {1.F, 0.F};
+  constexpr float bul_size = 16.F;
 
   namespace internal
   {

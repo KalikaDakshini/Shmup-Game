@@ -66,9 +66,6 @@ namespace kalika
    * @brief Straight path
    */
   struct Dasher : internal::BehaviourBase {
-    inline static constexpr std::string_view tex_path =
-      "./resources/Enemies/Dasher.png";
-
     inline static constexpr auto abs_vel = 500.F;
     inline static constexpr auto frame_count = 2UL;
     inline static constexpr auto interval = 30UL;
@@ -107,9 +104,6 @@ namespace kalika
    * @brief Hunts down the nearest enemy
    */
   struct Chaser : public internal::BehaviourBase {
-    inline static constexpr std::string_view tex_path =
-      "./resources/Enemies/Chaser.png";
-
     inline static constexpr auto abs_vel = 100.F;
     inline static constexpr auto frame_count = 4UL;
     inline static constexpr auto interval = 10UL;
@@ -156,12 +150,12 @@ namespace kalika
   /**
    * @brief Chases towards the target
    */
-  using Behaviour = std::variant<Dasher, Chaser>;
+  using Behaviour = std::variant<Dasher*, Chaser*>;
 
-  template<typename VariantMode> Behaviour get_behaviour()
+  template<typename BType> Behaviour get_behaviour()
   {
-    static Behaviour variant{VariantMode()};
-    return variant;
+    static BType behaviour;
+    return &behaviour;
   }
 
 }  // namespace kalika

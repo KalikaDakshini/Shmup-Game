@@ -9,14 +9,23 @@ set(TST_DIR "./tests")
 # Main executable
 add_executable(${MAIN_TARGET})
 target_sources(${MAIN_TARGET}
-	PRIVATE src/main.cpp src/SFMLApp.cpp
+	PRIVATE
+	src/main.cpp
+	src/SFMLApp.cpp
+	src/Handler.cpp
+	src/World.cpp
+
 	PUBLIC
 	FILE_SET HEADERS
+
 	FILES
 	include/SFMLApp.hpp
 )
 
-target_include_directories(${MAIN_TARGET} PUBLIC include/)
+target_include_directories(${MAIN_TARGET}
+	PUBLIC include/
+	PRIVATE src/
+)
 
 # Compilation flags
 set(BASE_FLAGS

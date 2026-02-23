@@ -12,8 +12,8 @@
 #include <SFML/System.hpp>
 
 #include <Event/GameEvent.hpp>
-#include <Object/Player.hpp>
-#include <Object/Pool.hpp>
+#include <Handler.hpp>
+#include <World.hpp>
 
 namespace kalika
 {
@@ -23,8 +23,6 @@ namespace kalika
     sf::Texture& body_texture();
 
     sf::Texture& reticle_texture();
-
-    sf::Texture& bullet_texture();
   }  // namespace internal
 
   /**
@@ -65,15 +63,15 @@ namespace kalika
     sf::Vector2f l_strength;
     sf::Vector2f r_strength;
 
-    // Objects
-    Player player_;
-    // Pool<Enemy> enemies_;
-    // Pool<Bullet> bullets_;
+    World world_;
 
     // Context objects
     WorldContext wld_ctx;
 
     // ======== Helper functions ======== //
+    // Get the player object
+    Player& player() { return world_.player; }
+
     // Log to window
     void log();
     // Update logs
@@ -81,12 +79,13 @@ namespace kalika
     // Update context
     void update_ctx();
 
+    // Handle game events
+    void handle_events();
+
     // Clamp deadzone
     template<typename T>
     sf::Vector2<T> deadzone(sf::Vector2<T> strength, float zone = 20.F);
 
-    // Handling JoystickHeld event
-    void fire_check();
     // Handle closing events
     void handle(sf::Event::Closed const&);
     // Key Press event

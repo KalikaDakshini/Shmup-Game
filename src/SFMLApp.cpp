@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <iostream>
 #include <random>
 
 #include <SFMLApp.hpp>
@@ -17,7 +16,7 @@ namespace kalika
     // World axis
     up({0.F, -1.F}),
     // Player Information
-    player_(
+    world_(
       {
         // Phase
         .position = sf::Vector2<float>(dimensions / 2U),
@@ -41,7 +40,7 @@ namespace kalika
       {sf::Vector2f(this->window_.getSize()) * 0.05F,
        sf::Vector2f(this->window_.getSize()) * 0.95F},
       // Player
-      this->player_,
+      this->world_.player,
       // Frame count
       this->frame_count
     )
@@ -81,17 +80,19 @@ namespace kalika
       // Clean slate
       this->window_.clear();
 
-      // Handle events
+      // Handle Window Events
       this->window_.handleEvents([this](auto const& event) {
         this->handle(event);
       });
 
       // Update objects
-      this->player_.update(this->wld_ctx, this->dt);
+      this->world_.update(this->wld_ctx, dt);
+
+      // Handle game events
+      this->handle_events();
 
       // Draw objects
-      this->window_.draw(this->player_.sprite());
-      this->window_.draw(this->player_.reticle_sprite());
+      this->world_.draw(this->window_);
 
       // Log messages to window
       this->log();
@@ -123,13 +124,12 @@ namespace kalika
     this->log_text_.setPosition(
       {static_cast<float>(x_disp), static_cast<float>(h - (y_disp * 2))}
     );
-    // this->log_text_.setString(
-    //   std::format(
-    //     "Bullet Count: {}\n\nEnemy Count: {}",
-    //     this->bullet_pool_.capacity(),
-    //     this->enemy_pool_.capacity()
-    //   )
-    // );
+    this->log_text_.setString(
+      std::format(
+        "Bullet Count: {}", this->world_.bullet_capacity()
+        // this->enemy_pool_.capacity()
+      )
+    );
     this->window_.draw(this->log_text_);
   }
 
@@ -144,18 +144,20 @@ namespace kalika
     this->logs_.emplace_back(text);
   }
 
-  // void SFMLApp::fire_check()
-  // {
-  //   if (this->player_.shoot.strength.lengthSquared() > 0) {
-  //     std::ranges::for_each(
-  //       this->player_.fire(this->wld_ctx, dt),
-  //       [this](auto& info) { this->bullet_pool_.get(info); }
-  //     );
-  //   }
-  // }
-
   void SFMLApp::update_ctx()
-  {}
+  {
+    // TODO(kalika): Update with enemy position changes
+  }
+
+  void SFMLApp::handle_events()
+  {
+    while (!this->bus_.empty()) {
+      this->bus_.front().visit([this](auto& arg) {
+        Handler::handle(arg, this->world_);
+      });
+      this->bus_.pop();
+    }
+  }
 
   // Handle closing events
   void SFMLApp::handle(sf::Event::Closed const&)
@@ -174,16 +176,16 @@ namespace kalika
   void SFMLApp::handle(sf::Event::JoystickButtonPressed const& event)
   {
     this->update_log(std::format("Pressed Button: {}", event.button));
-    // // Set fire modes
-    // if (sf::Joystick::isButtonPressed(0, 1)) {
-    //   this->player_.set_mode<ChaserFire>();
-    // }
-    // if (sf::Joystick::isButtonPressed(0, 2)) {
-    //   this->player_.set_mode<SpreadFire>();
-    // }
-    // if (sf::Joystick::isButtonPressed(0, 3)) {
-    //   this->player_.set_mode<RapidFire>();
-    // }
+    // Set fire modes
+    if (sf::Joystick::isButtonPressed(0, 1)) {
+      this->player().set_mode<ChaserFire>();
+    }
+    if (sf::Joystick::isButtonPressed(0, 2)) {
+      this->player().set_mode<SpreadFire>();
+    }
+    if (sf::Joystick::isButtonPressed(0, 3)) {
+      this->player().set_mode<RapidFire>();
+    }
   }
 
   template<typename T>
@@ -218,16 +220,21 @@ namespace kalika
     }
 
     // Set player and reticle strengths
-    this->player_.strength = this->l_strength;
-    this->player_.shoot.strength = this->r_strength;
+    this->player().strength = this->l_strength;
+    this->player().shoot.strength = this->r_strength;
 
     // Show stick positions
     auto print_vec = [](auto const& id, auto const& vec) {
       return std::format("{}: {}, {}\n", id, vec.x, vec.y);
     };
 
-    this->update_log(print_vec("L", this->l_strength));
-    this->update_log(print_vec("R", this->r_strength));
+    if (l_strength.lengthSquared() > 0) {
+      this->update_log(print_vec("L", this->l_strength));
+    }
+
+    if (r_strength.lengthSquared() > 0) {
+      this->update_log(print_vec("R", this->r_strength));
+    }
   }
 
   // All remaining events
@@ -249,13 +256,6 @@ namespace kalika
     {
       static sf::Texture t;
       load_texture(t, "resources/reticle.png");
-      return t;
-    }
-
-    sf::Texture& bullet_texture()
-    {
-      static sf::Texture t;
-      load_texture(t, "resources/Bullet.png");
       return t;
     }
   }  // namespace internal
