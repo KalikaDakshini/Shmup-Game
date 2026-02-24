@@ -21,7 +21,7 @@ namespace kalika
        * @brief Check if the object is hitting the bounds.
        */
       [[nodiscard]] bool at_xbound(
-        WorldContext const& ctx,
+        GameContext const& ctx,
         sf::Vector2f position,
         sf::Vector2f velocity
       ) const
@@ -40,7 +40,7 @@ namespace kalika
       }
 
       [[nodiscard]] bool at_ybound(
-        WorldContext const& ctx,
+        GameContext const& ctx,
         sf::Vector2f position,
         sf::Vector2f velocity
       ) const
@@ -83,7 +83,7 @@ namespace kalika
      * @brief Return the velocity at the bounds
      */
     [[nodiscard]] sf::Vector2f bound_velocity(
-      WorldContext const& ctx, sf::Vector2f position, sf::Vector2f velocity
+      GameContext const& ctx, sf::Vector2f position, sf::Vector2f velocity
     ) const
     {
       auto [vx, vy] = velocity;
@@ -132,7 +132,7 @@ namespace kalika
      * @brief Bind the velocity at the boundaries
      */
     [[nodiscard]] sf::Vector2f bound_velocity(
-      WorldContext const& ctx, sf::Vector2f position, sf::Vector2f velocity
+      GameContext const& ctx, sf::Vector2f position, sf::Vector2f velocity
     ) const
     {
       auto [vx, vy] = velocity;

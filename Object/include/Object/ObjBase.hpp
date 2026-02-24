@@ -68,7 +68,7 @@ namespace kalika::internal
      * @brief Update the kinetic data
      */
     void move(
-      WorldContext const& ctx, internal::Movable const& target, float dt
+      GameContext const& ctx, internal::Movable const& target, float dt
     );
 
     /**
@@ -105,7 +105,7 @@ namespace kalika::internal
     /**
      * @brief Animates the object
      */
-    void animate(WorldContext const& ctx);
+    void animate(GameContext const& ctx);
 
     /**
      * @brief Returns true if the object is at the edge of the arena

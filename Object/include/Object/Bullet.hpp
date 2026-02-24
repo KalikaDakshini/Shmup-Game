@@ -11,17 +11,8 @@ namespace kalika
     // Lifetime of the object
     float lifetime_;
 
-    /**
-     * @brief Update the object status by a frame
-     */
-    void update(WorldContext const& ctx, float dt);
-
-    // Check if the bullet is alive and toggle it
-    void check_alive(WorldContext const& ctx);
-
-    // Rebuild an inactive object
-    void rebuild(
-      size_t idx,
+    // Constructor
+    Bullet(
       sf::Vector2f position,
       sf::Vector2f velocity,
       sf::Texture& tex,
@@ -31,9 +22,13 @@ namespace kalika
       EventBus* bus
     );
 
-    // Constructor
-    Bullet(
-      size_t idx,
+    /**
+     * @brief Update the object status by a frame
+     */
+    void update(GameContext const& ctx, float dt);
+
+    // Rebuild an inactive object
+    void rebuild(
       sf::Vector2f position,
       sf::Vector2f velocity,
       sf::Texture& tex,
@@ -44,9 +39,10 @@ namespace kalika
     );
 
   private:
-    size_t pool_id_;
+    // Check if the bullet is alive and toggle it
+    void check_alive(GameContext const& ctx);
     // // Find the enemy closest to the bullet and retrieve its target
-    // internal::Movable const& find_closest(WorldContext const& ctx)
+    // internal::Movable const& find_closest(GameContext const& ctx)
     // {
     //   return ctx.enemies[0].mov;
     // }

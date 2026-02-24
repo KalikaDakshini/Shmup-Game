@@ -1,52 +1,50 @@
-#ifndef SFML_APP_H
-#define SFML_APP_H
+#ifndef WINDOW_H
+#define WINDOW_H
 
-#include <cmath>
-#include <deque>
 #include <format>
+#include <functional>
 #include <optional>
-#include <utility>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Main.hpp>
 #include <SFML/System.hpp>
 
 #include <Event/GameEvent.hpp>
-#include <Handler.hpp>
-#include <World.hpp>
 
 namespace kalika
 {
-  namespace internal
-  {
-    // Texture Cache
-    sf::Texture& body_texture();
-
-    sf::Texture& reticle_texture();
-  }  // namespace internal
-
   /**
    * @brief Application class
    */
-  struct SFMLApp {
+  struct SFMLWindow {
     // Constructor
-    SFMLApp(
-      sf::Vector2u dimensions = {1280U, 800U},
-      char const* title = "Smol Shmup"
-    );
+    SFMLWindow(sf::Vector2u dimensions, char const* title, EventBus* bus);
 
     /**
      * @brief Run the application
      */
-    void run();
+    bool is_active() { return this->window_.isOpen(); }
+
+    /**
+     * @brief Draw all objects in the world
+     *
+     *
+     * @param world
+     */
+    using SpriteRef = std::reference_wrapper<sf::Sprite const>;
+    /**
+     * @brief Draw the sprites given
+     */
+    void draw(std::vector<SpriteRef> const& sprites);
+    /**
+     * @brief Handle user input through SFML events
+     */
+    void handle_input();
 
   private:
     // Window information
-    float dt = 0.0F;
-    size_t frame_count = 0UL;
-    sf::Clock clock_;
     sf::RenderWindow window_;
-    sf::ContextSettings settings;
+    sf::ContextSettings settings_;
 
     // Log information
     sf::Font const font_{"resources/tuffy.ttf"};
@@ -54,33 +52,21 @@ namespace kalika
     std::deque<std::string> logs_;
 
     // World info
-    sf::Vector2f up;
+    sf::Vector2f x_axis_;
 
     // Game Event Handler
-    EventBus bus_;
+    EventBus* bus_ = nullptr;
 
     // Remember stick positions
-    sf::Vector2f l_strength;
-    sf::Vector2f r_strength;
-
-    World world_;
-
-    // Context objects
-    WorldContext wld_ctx;
+    sf::Vector2f l_strength_;
+    sf::Vector2f r_strength_;
 
     // ======== Helper functions ======== //
-    // Get the player object
-    Player& player() { return world_.player; }
 
     // Log to window
     void log();
     // Update logs
     void update_log(std::string const& text);
-    // Update context
-    void update_ctx();
-
-    // Handle game events
-    void handle_events();
 
     // Clamp deadzone
     template<typename T>
@@ -99,5 +85,4 @@ namespace kalika
   };
 
 }  //namespace kalika
-
 #endif

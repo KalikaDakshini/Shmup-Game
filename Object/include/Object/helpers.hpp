@@ -52,9 +52,9 @@ namespace kalika
   struct Player;
 
   /**
-   * @brief Current state of the world
+   * @brief Current state of the game
    */
-  struct WorldContext {
+  struct GameContext {
     sf::Clock& timer;
     sf::FloatRect world_size;
     Player& player;

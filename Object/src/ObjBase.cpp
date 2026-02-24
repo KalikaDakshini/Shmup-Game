@@ -28,7 +28,7 @@ namespace kalika::internal
 
   // Move the derived object by a frame
   void ObjBase::move(
-    WorldContext const& ctx, internal::Movable const& target, float dt
+    GameContext const& ctx, internal::Movable const& target, float dt
   )
   {
     // Swap frames for animations
@@ -65,7 +65,7 @@ namespace kalika::internal
     );
   }
 
-  void ObjBase::animate(WorldContext const& ctx)
+  void ObjBase::animate(GameContext const& ctx)
   {
     // Get the frame number
     auto frame_num = (ctx.frame_count / this->interval_) % frame_count_;

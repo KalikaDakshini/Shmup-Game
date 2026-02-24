@@ -25,6 +25,14 @@ namespace kalika
    */
   struct GameEvent {
     /**
+     * @brief Move the player
+     */
+    struct MoveEvent {
+      sf::Vector2f l_strength;
+      sf::Vector2f r_strength;
+    };
+
+    /**
      * @brief Event representing player firing bullets
      */
     struct FireEvent {
@@ -57,9 +65,7 @@ namespace kalika
     /**
      * @brief Release an Object from the pool
      */
-    struct ReleaseEvent {
-      size_t id;
-    };
+    struct ReleaseEvent {};
 
     /**
      * @brief Templated constructor
@@ -95,7 +101,7 @@ namespace kalika
     }
 
   private:
-    std::variant<FireEvent, SpawnEvent, ReleaseEvent> data_;
+    std::variant<FireEvent, SpawnEvent, ReleaseEvent, MoveEvent> data_;
 
     template<typename SubType>
     static constexpr bool is_subtype =

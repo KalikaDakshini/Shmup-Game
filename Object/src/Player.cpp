@@ -49,7 +49,7 @@ namespace kalika
   }
 
   // Move the player
-  void Player::update(WorldContext const& ctx, float dt)
+  void Player::update(GameContext const& ctx, float dt)
   {
     // Transform the co-ordinate frame to the new position
     this->update_body(ctx, dt);
@@ -57,7 +57,7 @@ namespace kalika
   }
 
   // Update body status
-  void Player::update_body(WorldContext const& ctx, float dt)
+  void Player::update_body(GameContext const& ctx, float dt)
   {
     // Rotate the frame
     this->mov_.up =

@@ -17,7 +17,7 @@ namespace kalika
     /**
      * @brief Check if object is alive
      */
-    void set_alive(WorldContext const& ctx)
+    void set_alive(GameContext const& ctx)
     {
       (void)ctx;
       this->alive_ = (this->health_ > 0.F);
@@ -26,7 +26,7 @@ namespace kalika
     /**
      * @brief Update the object by one frame
      */
-    void update(WorldContext const& ctx, float dt);
+    void update(GameContext const& ctx, float dt);
 
     /**
      * @brief Return the texture associated with the enemy

@@ -3,7 +3,7 @@
 namespace kalika
 {
 
-  void Enemy::update(WorldContext const& ctx, float dt)
+  void Enemy::update(GameContext const& ctx, float dt)
   {
     auto [px, py] = this->sprite().getPosition();
 

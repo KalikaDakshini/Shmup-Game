@@ -93,7 +93,7 @@ namespace kalika
     /**
      * @brief Trigger event for Rapid fire
      */
-    void fire(WorldContext const& ctx, float dt, EventBus* bus);
+    void fire(GameContext const& ctx, float dt, EventBus* bus);
 
   private:
     static constexpr size_t count = 2;
@@ -108,7 +108,7 @@ namespace kalika
     /**
      * @brief Trigger fire events for Spreadfire
      */
-    void fire(WorldContext const& ctx, float dt, EventBus* bus);
+    void fire(GameContext const& ctx, float dt, EventBus* bus);
 
   private:
     static constexpr size_t count = 5;
@@ -127,7 +127,7 @@ namespace kalika
     /**
      * @brief Trigger fire for Chaser fire
      */
-    void fire(WorldContext const& ctx, float dt, EventBus* bus);
+    void fire(GameContext const& ctx, float dt, EventBus* bus);
 
   private:
     static constexpr size_t count = 1;
@@ -193,12 +193,18 @@ namespace kalika
     /**
      * @brief Move and orient the ship in the corresponding direction
      */
-    void update(WorldContext const& ctx, float dt);
+    void update(GameContext const& ctx, float dt);
+
+    void set_strength(sf::Vector2f l_strength, sf::Vector2f r_strength)
+    {
+      this->strength = l_strength;
+      this->shoot.strength = r_strength;
+    }
 
     /**
      * @brief Fire bullets depending on firemode
      */
-    void fire(WorldContext const& ctx, float dt)
+    void fire(GameContext const& ctx, float dt)
     {
       std::visit(
         [&](auto& arg) { arg->fire(ctx, dt, this->bus_); },
@@ -213,7 +219,7 @@ namespace kalika
 
     // Remove the move method for player. Use update instead
     void move(
-      WorldContext const& ctx, internal::Movable const& target, float dt
+      GameContext const& ctx, internal::Movable const& target, float dt
     ) = delete;
 
   private:
@@ -226,7 +232,7 @@ namespace kalika
 
     // ====== Helper Functions ======= //
     // Update frame data
-    void update_body(WorldContext const& ctx, float dt);
+    void update_body(GameContext const& ctx, float dt);
     void update_reticle(float dt);
 
     // Bind displacement to stay within the bounds

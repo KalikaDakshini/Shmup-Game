@@ -8,6 +8,10 @@
 
 namespace kalika
 {
+  struct Handle {
+    size_t idx;
+  };
+
   template<typename Object> struct Pool {
     // Delete all copy constructors
     Pool() = default;
@@ -20,15 +24,16 @@ namespace kalika
     using const_iterator = std::vector<Object>::const_iterator;
 
     /**
-     * @brief Acquire an object from the pool. Creates a new object if none
-     * are available
+     * @brief Release an object from the pool to the user. Creates one if
+     * not present
      */
-    template<typename... Args> Object& acquire(Args... args);
+    template<typename... Args>
+    std::unique_ptr<Object> release(Args... args);
 
     /**
-     * @brief Mark the object inactive
+     * @brief Add the object back to pool
      */
-    void release(size_t idx);
+    void acquire(size_t idx);
 
     // Iterators
     iterator begin() { return this->objects_.begin(); }
@@ -48,22 +53,22 @@ namespace kalika
     [[nodiscard]] size_t capacity() const { return this->objects_.size(); }
 
   private:
-    std::vector<Object> objects_;
+    std::vector<std::unique_ptr<Object>> objects_;
     size_t last_ = 0UL;
   };
 
   // Acquire an object from the pool
   template<typename Object>
   template<typename... Args>
-  Object& Pool<Object>::acquire(Args... args)
+  std::unique_ptr<Object> Pool<Object>::release(Args... args)
   {
     // Add object if pool is full
     if (this->last_ == this->objects_.size()) {
-      this->objects_.emplace_back(this->last_, args...);
+      this->objects_.emplace_back(args...);
     }
     // Get first unused object otherwise
     else {
-      this->objects_[this->last_].rebuild(this->last_, args...);
+      this->objects_[this->last_].rebuild(args...);
     }
     std::cout << std::format("Spawning bullet {}\n", this->last_);
 
@@ -71,8 +76,9 @@ namespace kalika
     return this->objects_[this->last_++];
   }
 
+  // TODO(kalika): Implement an O(1) pool using Handles
   // Mark an object unused
-  template<typename Object> void Pool<Object>::release(size_t idx)
+  template<typename Object> void Pool<Object>::acquire(size_t idx)
   {
     std::cout << std::format("Despawning bullet {}\n", idx);
     // Invalid index
@@ -80,6 +86,7 @@ namespace kalika
       return;
     }
 
+    // Bug: Indices aren't swapped
     std::swap(this->objects_[idx], this->objects_[--this->last_]);
   }
 

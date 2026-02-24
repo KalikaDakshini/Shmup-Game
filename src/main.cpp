@@ -1,13 +1,13 @@
 #include <iostream>
 
-#include <SFMLApp.hpp>
+#include <SFMLGame.hpp>
 
 int main()
 {
-  kalika::SFMLApp app({1600, 1000});
+  kalika::SFMLGame game({1600, 1000}, "smol-shmup");
   // Run application
   try {
-    app.run();
+    game.run();
   } catch (std::exception const& e) {
     std::cerr << e.what() << '\n';
   }

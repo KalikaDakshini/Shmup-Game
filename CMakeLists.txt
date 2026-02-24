@@ -11,20 +11,17 @@ add_executable(${MAIN_TARGET})
 target_sources(${MAIN_TARGET}
 	PRIVATE
 	src/main.cpp
-	src/SFMLApp.cpp
-	src/Handler.cpp
-	src/World.cpp
+	src/SFMLGame.cpp
 
 	PUBLIC
 	FILE_SET HEADERS
 
 	FILES
-	include/SFMLApp.hpp
+	include/SFMLGame.hpp
 )
 
 target_include_directories(${MAIN_TARGET}
 	PUBLIC include/
-	PRIVATE src/
 )
 
 # Compilation flags
@@ -71,3 +68,7 @@ target_link_libraries(${MAIN_TARGET} PRIVATE Object)
 # Link library Event
 add_subdirectory(Event)
 target_link_libraries(${MAIN_TARGET} PRIVATE Event)
+
+# Link library Window
+add_subdirectory(Window)
+target_link_libraries(${MAIN_TARGET} PRIVATE Window)

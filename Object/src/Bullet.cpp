@@ -3,7 +3,6 @@
 namespace kalika
 {
   Bullet::Bullet(
-    size_t id,
     sf::Vector2f position,
     sf::Vector2f velocity,
     sf::Texture& tex,
@@ -13,14 +12,13 @@ namespace kalika
     EventBus* bus
   ) :
     ObjBase(position, velocity, velocity.normalized(), tex, bul_size, bus),
-    lifetime_(lifetime),
-    pool_id_(id)
+    lifetime_(lifetime)
   {
     this->behaviour_ = behaviour;
   }
 
   // Update the bullet by frame
-  void Bullet::update(WorldContext const& ctx, float dt)
+  void Bullet::update(GameContext const& ctx, float dt)
   {
     this->lifetime_ -= dt;
     // auto const& target = this->find_closest(ctx);
@@ -30,20 +28,17 @@ namespace kalika
   }
 
   // Check if the bullet is alive
-  void Bullet::check_alive(WorldContext const& ctx)
+  void Bullet::check_alive(GameContext const& ctx)
   {
     bool const area_check =
       ctx.world_size.contains(this->sprite().getPosition());
     bool const time_check = this->lifetime_ > 0;
 
-    if (!(area_check && time_check)) {
-      this->bus_->emplace(GameEvent::ReleaseEvent{.id = this->pool_id_});
-    }
+    this->alive_ = area_check && time_check;
   }
 
   // Rebuild bullet object
   void Bullet::rebuild(
-    size_t idx,
     sf::Vector2f position,
     sf::Vector2f velocity,
     sf::Texture& tex,
@@ -60,7 +55,6 @@ namespace kalika
     this->behaviour_ = behaviour;
     this->bus_ = bus;
     this->mov_.up = velocity.normalized();
-    this->pool_id_ = idx;
     (void)bul_size;
 
     this->update_frame();

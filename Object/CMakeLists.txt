@@ -9,29 +9,25 @@ target_sources(Object
 	src/ObjBase.cpp
 	src/FireMode.cpp
 	src/Bullet.cpp
+	src/World.cpp
 
-	# src/Bullet.cpp
-	# src/Enemy.cpp
 	PUBLIC
 	FILE_SET HEADERS
 	BASE_DIRS include/
 	FILES
 
+	include/Object/ObjBase.hpp
 	include/Object/Bullet.hpp
-	include/Object/Behaviour.hpp
 	include/Object/Player.hpp
-
-	# include/Object/Enemy.hpp
+	include/Object/World.hpp
 )
 
 target_include_directories(Object
 	PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/include
-	PRIVATE
-	${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(Object PUBLIC Event)
+target_link_libraries(Object PRIVATE Event)
 
 # Enable Testing
 if(BUILD_TESTS)

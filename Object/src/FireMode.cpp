@@ -3,7 +3,7 @@
 namespace kalika
 {
   // Rapid fire bullets
-  void RapidFire::fire(WorldContext const& ctx, float dt, EventBus* bus)
+  void RapidFire::fire(GameContext const& ctx, float dt, EventBus* bus)
   {
     auto& p = ctx.player;
     // Spawn bullets if cooldown has passed
@@ -35,7 +35,7 @@ namespace kalika
   }
 
   // Rapid fire bullets
-  void SpreadFire::fire(WorldContext const& ctx, float dt, EventBus* bus)
+  void SpreadFire::fire(GameContext const& ctx, float dt, EventBus* bus)
   {
     auto& p = ctx.player;
     // Spawn bullets if offset has passed
@@ -79,7 +79,7 @@ namespace kalika
   }
 
   // Homing fire bullets
-  void ChaserFire::fire(WorldContext const& ctx, float dt, EventBus* bus)
+  void ChaserFire::fire(GameContext const& ctx, float dt, EventBus* bus)
   {
     auto& p = ctx.player;
     // Spawn bullets if offset has passed

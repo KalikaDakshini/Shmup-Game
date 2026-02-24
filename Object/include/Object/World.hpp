@@ -1,6 +1,9 @@
 #ifndef WORLD_H
 #define WORLD_H
 
+#include <functional>
+#include <vector>
+
 #include <SFML/Window.hpp>
 
 #include <Event/GameEvent.hpp>
@@ -13,6 +16,7 @@ namespace kalika
   struct World {
     // Player Object
     Player player;
+    // Event Bus
     EventBus* bus;
 
     World(PlayerInfo info, EventBus* e_bus) :
@@ -22,27 +26,16 @@ namespace kalika
     /**
      * @brief Update the state of objects
      */
-    void update(WorldContext const& ctx, float dt);
+    void update(GameContext const& ctx, float dt);
+
+    using SpriteRef = std::reference_wrapper<sf::Sprite const>;
+
+    std::vector<SpriteRef> sprites() const;
 
     /**
-     * @brief Draw the objects to window
+     * @brief Number of active bullets on screen
      */
-    void draw(sf::RenderWindow& window);
-
-    /**
-     * @brief Spawn bullet object
-     */
-    template<typename... Args> void spawn_bullet(Args... args)
-    {
-      this->bullets_.acquire(args...);
-    }
-
-    /**
-     * @brief Despawn bullet object
-     */
-    void despawn_bullet(size_t idx) { this->bullets_.release(idx); }
-
-    size_t bullet_capacity() const { return this->bullets_.capacity(); }
+    size_t bullet_count() const { return this->bullets_.size(); }
 
     // template<typename... Args> void spawn_enemy(Args... args)
     // {
@@ -51,7 +44,7 @@ namespace kalika
 
   private:
     // Object Pools
-    Pool<Bullet> bullets_;
+    std::vector<std::unique_ptr<Bullet>> bullets_;
 
     // Pool<Enemy> enemies_;
   };
