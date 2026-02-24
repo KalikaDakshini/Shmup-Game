@@ -1,95 +1,99 @@
 #ifndef POOL_H
 #define POOL_H
 
-#include <format>
-#include <iostream>
-#include <memory>
-#include <vector>
+#include <deque>
+#include <limits>
+#include <utility>
 
-namespace kalika
-{
-  struct Handle {
-    size_t idx;
-  };
+// Wrapper around the object
+using slot_id = std::size_t;
+constexpr size_t npos = std::numeric_limits<std::size_t>::max();
 
-  template<typename Object> struct Pool {
-    // Delete all copy constructors
-    Pool() = default;
-    Pool(Pool const&) = delete;
-    Pool(Pool&&) = delete;
-    Pool operator=(Pool const&) = delete;
-    Pool operator=(Pool&&) = delete;
+/**
+ * @brief Wrapper around an object class
+ */
+template<typename Object> struct Wrapper {
+  Object obj;
+  slot_id idx;
+  slot_id next_free = npos;
+  bool occupied = false;
 
-    using iterator = std::vector<Object>::iterator;
-    using const_iterator = std::vector<Object>::const_iterator;
-
-    /**
-     * @brief Release an object from the pool to the user. Creates one if
-     * not present
-     */
-    template<typename... Args>
-    std::unique_ptr<Object> release(Args... args);
-
-    /**
-     * @brief Add the object back to pool
-     */
-    void acquire(size_t idx);
-
-    // Iterators
-    iterator begin() { return this->objects_.begin(); }
-
-    iterator end() { return this->objects_.begin() + this->last_; }
-
-    const_iterator begin() const { return this->objects_.begin(); }
-
-    const_iterator end() const
-    {
-      return this->objects_.begin() + this->last_;
-    }
-
-    /**
-     * @brief Current capacity of the pool
-     */
-    [[nodiscard]] size_t capacity() const { return this->objects_.size(); }
-
-  private:
-    std::vector<std::unique_ptr<Object>> objects_;
-    size_t last_ = 0UL;
-  };
-
-  // Acquire an object from the pool
-  template<typename Object>
+  // Constructor
   template<typename... Args>
-  std::unique_ptr<Object> Pool<Object>::release(Args... args)
-  {
-    // Add object if pool is full
-    if (this->last_ == this->objects_.size()) {
-      this->objects_.emplace_back(args...);
-    }
-    // Get first unused object otherwise
-    else {
-      this->objects_[this->last_].rebuild(args...);
-    }
-    std::cout << std::format("Spawning bullet {}\n", this->last_);
+  Wrapper(Args&&... args) : obj(std::forward<Args>(args)...)
+  {}
 
-    // Return a reference to the object
-    return this->objects_[this->last_++];
+  // Operator overloading
+  Object* operator->() { return &(this->obj); }
+
+  Object const* operator->() const { return &(this->obj); }
+};
+
+/**
+ * @brief Generic Pool
+ */
+template<typename Object> struct Pool {
+  /**
+   * @brief Acquire the index of the object
+   */
+  template<typename... Args> Wrapper<Object>& acquire(Args&&... args)
+  {
+    // Pool is fill. Add a new object
+    if (this->free_head_ == npos) {
+      Wrapper<Object>& slot =
+        this->slots_.emplace_back(std::forward<Args>(args)...);
+
+      slot.idx = this->capacity() - 1;
+      slot.occupied = true;
+      return slot;
+    }
+    // Get the object at the free head
+    slot_id idx = this->free_head_;
+    Wrapper<Object>& slot = this->slots_[idx];
+
+    // Rebuild its state
+    slot->rebuild(std::forward<Args>(args)...);
+    slot.occupied = true;
+    this->free_head_ = slot.next_free;
+
+    slot.next_free = npos;
+
+    return slot;
   }
 
-  // TODO(kalika): Implement an O(1) pool using Handles
-  // Mark an object unused
-  template<typename Object> void Pool<Object>::acquire(size_t idx)
+  /**
+   * @brief Release the object for re-use
+   */
+  void release(slot_id idx)
   {
-    std::cout << std::format("Despawning bullet {}\n", idx);
-    // Invalid index
-    if (idx >= this->last_) {
+    // Check if index is valid
+    if (!valid(idx)) {
       return;
     }
 
-    // Bug: Indices aren't swapped
-    std::swap(this->objects_[idx], this->objects_[--this->last_]);
+    Wrapper<Object>& slot = this->slots_[idx];
+    // Set the slot to free
+    slot.occupied = false;
+    slot.next_free = free_head_;
+
+    // Set the free head to current
+    this->free_head_ = idx;
   }
 
-}  //namespace kalika
+  /**
+   * @brief Capacity of the pool
+   */
+  slot_id capacity() const { return this->slots_.size(); }
+
+private:
+  slot_id free_head_ = npos;
+  std::deque<Wrapper<Object>> slots_;
+
+  // ======= Helper functions ======= //
+  bool valid(slot_id idx) const
+  {
+    return idx < this->slots_.size() && slots_[idx].occupied;
+  }
+};
 
 #endif

@@ -24,6 +24,14 @@ namespace kalika
     {}
 
     /**
+     * @brief Add a bullet to the world
+     */
+    void add_bullet(Wrapper<Bullet> const& b_wrap)
+    {
+      this->bullets_.push_back(b_wrap);
+    }
+
+    /**
      * @brief Update the state of objects
      */
     void update(GameContext const& ctx, float dt);
@@ -44,7 +52,7 @@ namespace kalika
 
   private:
     // Object Pools
-    std::vector<std::unique_ptr<Bullet>> bullets_;
+    std::vector<Wrapper<Bullet>> bullets_;
 
     // Pool<Enemy> enemies_;
   };

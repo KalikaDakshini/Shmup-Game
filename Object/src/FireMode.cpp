@@ -1,3 +1,5 @@
+#include <functional>
+
 #include <Object/Player.hpp>
 
 namespace kalika
@@ -21,15 +23,14 @@ namespace kalika
 
       // Push events for spawning bullets
       for (auto idx = 0UL; idx < RapidFire::count; idx++) {
-        bus->emplace(
-          GameEvent::FireEvent{
-            .size = bul_size,
-            .texture = internal::bullet_texture(),
-            .position = pos[idx],
-            .velocity = this->velocity * p.forward(),
-            .lifetime = this->lifetime,
-          }
-        );
+        GameEvent::FireEvent const event{
+          .position = pos[idx],
+          .velocity = this->velocity * p.forward(),
+          .texture = std::ref(internal::bullet_texture()),
+          .size = bul_size,
+          .lifetime = this->lifetime
+        };
+        bus->emplace(event);
       }
     }
   }
@@ -65,15 +66,14 @@ namespace kalika
 
       // 2. Generate info and add bullets
       for (auto idx = 0UL; idx < SpreadFire::count; idx++) {
-        bus->emplace(
-          GameEvent::FireEvent{
-            .size = bul_size,
-            .texture = internal::bullet_texture(),
-            .position = pos[idx],
-            .velocity = this->velocity * dir[idx],
-            .lifetime = this->lifetime,
-          }
-        );
+        GameEvent::FireEvent const event{
+          .position = pos[idx],
+          .velocity = this->velocity * dir[idx],
+          .texture = std::ref(internal::bullet_texture()),
+          .size = bul_size,
+          .lifetime = this->lifetime
+        };
+        bus->emplace(event);
       }
     }
   }
@@ -89,15 +89,14 @@ namespace kalika
 
       // 2. Generate info and add bullets
       auto angle = this->toggle_ ? sf::degrees(45) : sf::degrees(-45);
-      bus->emplace(
-        GameEvent::FireEvent{
-          .size = bul_size,
-          .texture = internal::bullet_texture(),
-          .position = p.position() + p.forward().rotatedBy(angle) * px,
-          .velocity = this->velocity * p.forward(),
-          .lifetime = this->lifetime,
-        }
-      );
+      GameEvent::FireEvent const event{
+        .position = p.position() + p.forward().rotatedBy(angle) * px,
+        .velocity = this->velocity * p.forward(),
+        .texture = std::ref(internal::bullet_texture()),
+        .size = bul_size,
+        .lifetime = this->lifetime
+      };
+      bus->emplace(event);
 
       // Toggle Positions
       this->toggle_ != this->toggle_;

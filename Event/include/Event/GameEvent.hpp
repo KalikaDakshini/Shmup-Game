@@ -36,24 +36,26 @@ namespace kalika
      * @brief Event representing player firing bullets
      */
     struct FireEvent {
-      // Sprite data
-      float size = 16.F;
-      std::reference_wrapper<sf::Texture> texture;
+      // Phase
       sf::Vector2f position;
       sf::Vector2f velocity;
-      // Lifetime data
-      float lifetime = 1.0F;
+      // Sprite data
+      std::reference_wrapper<sf::Texture> texture;
+      float size;
+      // Game data
+      float lifetime;
     };
 
     /**
      * @brief Event representing enemies spawning
      */
     struct SpawnEvent {
+      // Phase
+      sf::Vector2f position;
+      sf::Vector2f velocity;
       // Sprite data
       float size = 90.F;
       std::reference_wrapper<sf::Texture> texture;
-      sf::Vector2f position;
-      sf::Vector2f velocity;
       // Lifetime data
       float health = 10.F;
       // Animation data
@@ -65,7 +67,9 @@ namespace kalika
     /**
      * @brief Release an Object from the pool
      */
-    struct ReleaseEvent {};
+    struct ReleaseEvent {
+      size_t idx;
+    };
 
     /**
      * @brief Templated constructor

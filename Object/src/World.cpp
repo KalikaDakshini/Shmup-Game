@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <Object/World.hpp>
 
 namespace kalika
@@ -12,12 +14,17 @@ namespace kalika
     }
 
     // Update bullets
-    for (auto const& bullet : bullets_) {
+    for (auto& bullet : bullets_) {
       bullet->update(ctx, dt);
       if (!bullet->is_alive()) {
-        bus->emplace(GameEvent::ReleaseEvent{});
+        bus->emplace(GameEvent::ReleaseEvent{bullet.idx});
       }
     }
+
+    // Update current cache
+    std::erase_if(this->bullets_, [](auto& bullet) {
+      return !bullet->is_alive();
+    });
   }
 
   std::vector<World::SpriteRef> World::sprites() const

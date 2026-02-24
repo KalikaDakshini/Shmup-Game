@@ -1,4 +1,5 @@
 #include <SFMLGame.hpp>
+#include <iostream>
 
 namespace kalika
 {
@@ -82,12 +83,26 @@ namespace kalika
   }
 
   // Spawn Bullets
-  void SFMLGame::handle(GameEvent::FireEvent)
-  {}
+  void SFMLGame::handle(GameEvent::FireEvent event)
+  {
+    auto const& wrapper = this->bullets_.acquire(
+      event.position,
+      event.velocity,
+      event.texture,
+      event.size,
+      event.lifetime,
+      get_behaviour<Dasher>(),
+      &(this->bus_)
+    );
+
+    this->world_.add_bullet(wrapper);
+  }
 
   // Release Bullets
-  void SFMLGame::handle(GameEvent::ReleaseEvent)
-  {}
+  void SFMLGame::handle(GameEvent::ReleaseEvent event)
+  {
+    this->bullets_.release(event.idx);
+  }
 
   // Spawn Enemies
   void SFMLGame::handle(GameEvent::SpawnEvent)
