@@ -79,9 +79,9 @@ namespace kalika
     }
 
     // Log Object count
-    this->log_text_.setPosition(
-      {static_cast<float>(x_disp), static_cast<float>(h - (y_disp * 2))}
-    );
+    // this->log_text_.setPosition(
+    //   {static_cast<float>(x_disp), static_cast<float>(h - (y_disp * 2))}
+    // );
     // this->log_text_.setString(
     //   std::format(
     //     "Bullet Count: {}", this->world_.bullet_capacity()
@@ -121,15 +121,15 @@ namespace kalika
   {
     this->update_log(std::format("Pressed Button: {}", event.button));
     // Set fire modes
-    // if (sf::Joystick::isButtonPressed(0, 1)) {
-    //   this->player().set_mode<ChaserFire>();
-    // }
-    // if (sf::Joystick::isButtonPressed(0, 2)) {
-    //   this->player().set_mode<SpreadFire>();
-    // }
-    // if (sf::Joystick::isButtonPressed(0, 3)) {
-    //   this->player().set_mode<RapidFire>();
-    // }
+    if (sf::Joystick::isButtonPressed(0, 1)) {
+      this->bus_->emplace(GameEvent::SwitchEvent{2});
+    }
+    if (sf::Joystick::isButtonPressed(0, 2)) {
+      this->bus_->emplace(GameEvent::SwitchEvent{1});
+    }
+    if (sf::Joystick::isButtonPressed(0, 3)) {
+      this->bus_->emplace(GameEvent::SwitchEvent{0});
+    }
   }
 
   template<typename T>

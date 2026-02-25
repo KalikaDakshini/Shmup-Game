@@ -4,6 +4,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 #include <string_view>
+#include <typeindex>
+#include <unordered_map>
 #include <variant>
 
 #include <Object/helpers.hpp>
@@ -147,15 +149,21 @@ namespace kalika
     }
   };
 
-  /**
-   * @brief Chases towards the target
-   */
-  using Behaviour = std::variant<Dasher*, Chaser*>;
+  using Behaviour = std::variant<Dasher, Chaser>*;
 
-  template<typename BType> Behaviour get_behaviour()
+  static std::unordered_map<std::type_index, std::variant<Dasher, Chaser>>
+    behaviour_map = {
+      {std::type_index(typeid(Dasher)), Dasher()},
+      {std::type_index(typeid(Chaser)), Chaser()},
+  };
+
+  // Get a behaviour associated with the type
+  inline Behaviour get_behaviour(std::type_index idx)
   {
-    static BType behaviour;
-    return &behaviour;
+    if (behaviour_map.contains(idx)) {
+      return &behaviour_map[idx];
+    }
+    return nullptr;
   }
 
 }  // namespace kalika

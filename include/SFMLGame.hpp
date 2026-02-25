@@ -51,10 +51,12 @@ namespace kalika
     void handle(GameEvent::MoveEvent event);
     // Spawn Bullets
     void handle(GameEvent::FireEvent event);
-    // Spawn Enemies
-    void handle(GameEvent::SpawnEvent event);
     // Release Objects
     void handle(GameEvent::ReleaseEvent event);
+    // Spawn Enemies
+    void handle(GameEvent::SpawnEvent event);
+    // Set Firemode
+    void handle(GameEvent::SwitchEvent event);
   };
 
 }  //namespace kalika

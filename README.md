@@ -11,8 +11,8 @@ A simple C++ twin stick shooter game.
 - [ ] AI system
 - [ ] Collisions
 - [ ] Three firing modes
-  - [ ] Spread (pre-compute angles)
-  - [ ] Homing
+  - [x] Spread (pre-compute angles)
+  - [x] Homing
   - [ ] Cluster
 - [ ] Views for dynamic camera
 - [ ] Three more enemies

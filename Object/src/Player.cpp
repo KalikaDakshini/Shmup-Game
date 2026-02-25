@@ -41,9 +41,6 @@ namespace kalika
     this->shoot.sprite.scale({3.0F, 3.0F});
     this->shoot.sprite.setColor(sf::Color::Transparent);
 
-    // Set default fire mode
-    this->set_mode<RapidFire>();
-
     // Update the frame of the ship
     this->update_frame();
   }

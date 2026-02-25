@@ -3,6 +3,7 @@
 
 #include <type_traits>
 
+#include <Event/GameEvent.hpp>
 #include <Object/ObjBase.hpp>
 
 namespace kalika
@@ -12,15 +13,7 @@ namespace kalika
     float lifetime_;
 
     // Constructor
-    Bullet(
-      sf::Vector2f position,
-      sf::Vector2f velocity,
-      sf::Texture& tex,
-      float bul_size,
-      float lifetime,
-      Behaviour behaviour,
-      EventBus* bus
-    );
+    Bullet(GameEvent::FireEvent event, EventBus* bus);
 
     /**
      * @brief Update the object status by a frame
@@ -28,15 +21,7 @@ namespace kalika
     void update(GameContext const& ctx, float dt);
 
     // Rebuild an inactive object
-    void rebuild(
-      sf::Vector2f position,
-      sf::Vector2f velocity,
-      sf::Texture& tex,
-      float bul_size,
-      float lifetime,
-      Behaviour behaviour,
-      EventBus* bus
-    );
+    void rebuild(GameEvent::FireEvent event, EventBus* bus);
 
   private:
     // Check if the bullet is alive and toggle it

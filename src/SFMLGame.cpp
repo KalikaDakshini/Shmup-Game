@@ -85,15 +85,7 @@ namespace kalika
   // Spawn Bullets
   void SFMLGame::handle(GameEvent::FireEvent event)
   {
-    auto const& wrapper = this->bullets_.acquire(
-      event.position,
-      event.velocity,
-      event.texture,
-      event.size,
-      event.lifetime,
-      get_behaviour<Dasher>(),
-      &(this->bus_)
-    );
+    auto const& wrapper = this->bullets_.acquire(event, &(this->bus_));
 
     this->world_.add_bullet(wrapper);
   }
@@ -107,6 +99,12 @@ namespace kalika
   // Spawn Enemies
   void SFMLGame::handle(GameEvent::SpawnEvent)
   {}
+
+  // Change fire modes
+  void SFMLGame::handle(GameEvent::SwitchEvent event)
+  {
+    this->player().set_mode(event.fire_id);
+  }
 
   namespace internal
   {

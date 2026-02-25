@@ -2,19 +2,18 @@
 
 namespace kalika
 {
-  Bullet::Bullet(
-    sf::Vector2f position,
-    sf::Vector2f velocity,
-    sf::Texture& tex,
-    float bul_size,
-    float lifetime,
-    Behaviour behaviour,
-    EventBus* bus
-  ) :
-    ObjBase(position, velocity, velocity.normalized(), tex, bul_size, bus),
-    lifetime_(lifetime)
+  Bullet::Bullet(GameEvent::FireEvent event, EventBus* bus) :
+    ObjBase(
+      event.position,
+      event.velocity,
+      event.velocity.normalized(),
+      event.texture,
+      event.size,
+      bus
+    ),
+    lifetime_(event.lifetime)
   {
-    this->behaviour_ = behaviour;
+    this->behaviour_ = get_behaviour(event.behaviour_id);
   }
 
   // Update the bullet by frame
@@ -38,23 +37,16 @@ namespace kalika
   }
 
   // Rebuild bullet object
-  void Bullet::rebuild(
-    sf::Vector2f position,
-    sf::Vector2f velocity,
-    sf::Texture& tex,
-    float bul_size,
-    float lifetime,
-    Behaviour behaviour,
-    EventBus* bus
-  )
+  void Bullet::rebuild(GameEvent::FireEvent event, EventBus* bus)
   {
-    this->mov_.pos = position;
-    this->mov_.vel = velocity;
-    this->draw_.sprite.setTexture(tex);
-    this->lifetime_ = lifetime;
-    this->behaviour_ = behaviour;
+    this->mov_.pos = event.position;
+    this->mov_.vel = event.velocity;
+    this->draw_.sprite.setTexture(event.texture);
+    this->lifetime_ = event.lifetime;
+    this->behaviour_ = get_behaviour(event.behaviour_id);
     this->bus_ = bus;
-    this->mov_.up = velocity.normalized();
+    this->mov_.up = event.velocity.normalized();
+    // TODO(kalika): Implement bullet size change if needed
     (void)bul_size;
 
     this->update_frame();

@@ -37,15 +37,16 @@ namespace kalika::internal
     }
 
     // Update kinetic data
-    auto accel = std::visit(
-      [&target, this](auto const* var) {
-        return (var != nullptr) ? var->accel(this->mov_, target)
-                                : sf::Vector2f{};
-      },
-      this->behaviour_
-    );
+    auto accel = (this->behaviour_ != nullptr)
+                   ? std::visit(
+                       [&target, this](auto const& var) {
+                         return var.accel(this->mov_, target);
+                       },
+                       *this->behaviour_
+                     )
+                   : sf::Vector2f{};
     this->mov_.pos += this->velocity() * dt;
-    this->mov_.vel = this->velocity() + accel * dt;
+    this->mov_.vel = this->velocity() + (accel * dt);
 
     // Update co-ordinate frame
     this->update_frame();

@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <queue>
+#include <typeindex>
 #include <variant>
 
 namespace kalika
@@ -42,6 +43,8 @@ namespace kalika
       // Sprite data
       std::reference_wrapper<sf::Texture> texture;
       float size;
+      // Behaviour data
+      std::type_index behaviour_id;
       // Game data
       float lifetime;
     };
@@ -56,6 +59,8 @@ namespace kalika
       // Sprite data
       float size = 90.F;
       std::reference_wrapper<sf::Texture> texture;
+      // Behaviour data
+      std::type_index behaviour_id;
       // Lifetime data
       float health = 10.F;
       // Animation data
@@ -69,6 +74,13 @@ namespace kalika
      */
     struct ReleaseEvent {
       size_t idx;
+    };
+
+    /**
+     * @brief Switch firing modes
+     */
+    struct SwitchEvent {
+      size_t fire_id;
     };
 
     /**
@@ -105,7 +117,9 @@ namespace kalika
     }
 
   private:
-    std::variant<FireEvent, SpawnEvent, ReleaseEvent, MoveEvent> data_;
+    std::
+      variant<FireEvent, SpawnEvent, ReleaseEvent, MoveEvent, SwitchEvent>
+        data_;
 
     template<typename SubType>
     static constexpr bool is_subtype =

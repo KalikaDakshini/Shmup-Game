@@ -120,6 +120,7 @@ namespace kalika
   struct ChaserFire : FireMode {
     ChaserFire()
     {
+      this->velocity = 500.F;
       this->distance = 200.F;
       this->lifetime = 3.0F;
     }
@@ -133,13 +134,6 @@ namespace kalika
     static constexpr size_t count = 1;
     bool toggle_ = true;
   };
-
-  template<typename T> static T* get_mode()
-  {
-    static_assert(std::is_base_of_v<FireMode, T>, "Invalid FireMode type");
-    static T mode;
-    return &mode;
-  }
 
   /**
    * @brief Player class
@@ -207,15 +201,15 @@ namespace kalika
     void fire(GameContext const& ctx, float dt)
     {
       std::visit(
-        [&](auto& arg) { arg->fire(ctx, dt, this->bus_); },
-        this->fire_mode_
+        [&](auto& arg) { arg.fire(ctx, dt, this->bus_); },
+        fire_modes_[this->mode_id_]
       );
     }
 
-    template<typename T> void set_mode()
-    {
-      this->fire_mode_ = get_mode<T>();
-    }
+    /**
+     * @brief Set the fire mode
+     */
+    void set_mode(size_t idx) { this->mode_id_ = idx; }
 
     // Remove the move method for player. Use update instead
     void move(
@@ -228,7 +222,14 @@ namespace kalika
 
     // Set if reticle should be active
     bool active_ = false;
-    std::variant<RapidFire*, SpreadFire*, ChaserFire*> fire_mode_;
+
+    // Choose a firing mode
+    using FireType = std::variant<RapidFire, SpreadFire, ChaserFire>;
+    static constexpr size_t NUM_MODES = std::variant_size_v<FireType>;
+    inline static std::array<FireType, NUM_MODES> fire_modes_{
+      RapidFire(), SpreadFire(), ChaserFire()
+    };
+    size_t mode_id_ = 0;
 
     // ====== Helper Functions ======= //
     // Update frame data

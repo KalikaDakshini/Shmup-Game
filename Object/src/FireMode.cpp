@@ -1,6 +1,7 @@
 #include <functional>
 
 #include <Object/Player.hpp>
+#include <iostream>
 
 namespace kalika
 {
@@ -28,6 +29,7 @@ namespace kalika
           .velocity = this->velocity * p.forward(),
           .texture = std::ref(internal::bullet_texture()),
           .size = bul_size,
+          .behaviour_id = std::type_index(typeid(Dasher)),
           .lifetime = this->lifetime
         };
         bus->emplace(event);
@@ -71,6 +73,7 @@ namespace kalika
           .velocity = this->velocity * dir[idx],
           .texture = std::ref(internal::bullet_texture()),
           .size = bul_size,
+          .behaviour_id = std::type_index(typeid(Dasher)),
           .lifetime = this->lifetime
         };
         bus->emplace(event);
@@ -94,12 +97,13 @@ namespace kalika
         .velocity = this->velocity * p.forward(),
         .texture = std::ref(internal::bullet_texture()),
         .size = bul_size,
+        .behaviour_id = std::type_index(typeid(Chaser)),
         .lifetime = this->lifetime
       };
       bus->emplace(event);
 
       // Toggle Positions
-      this->toggle_ != this->toggle_;
+      this->toggle_ = !this->toggle_;
     }
   }
 
